@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* OHS Remote Design System */
+    --font-heading: 'DM Serif Display', serif;
+    --font-body: 'Inter', sans-serif;
+
+    /* Dark theme backgrounds */
+    --bg-dark: 220 50% 7%;
+    --bg-surface: 220 30% 10%;
+    --bg-surface-light: 220 20% 16%;
+    
+    /* Light theme backgrounds */
+    --bg-light: 210 40% 98%;
+    --bg-card: 0 0% 100%;
+    
+    /* Primary blues */
+    --primary: 224 76% 48%;
+    --primary-hover: 224 76% 40%;
+    --primary-light: 217 91% 60%;
+    --accent: 213 94% 68%;
+    
+    /* Text colors */
+    --text-light: 210 40% 96%;
+    --text-muted: 215 20% 65%;
+    --text-dark: 222 47% 11%;
+    --text-dark-muted: 215 16% 47%;
+    
+    /* Borders */
+    --border-dark: 220 30% 18%;
+    --border-light: 214 32% 91%;
+    
+    /* Status colors */
+    --success: 142 71% 45%;
+    --success-light: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --error: 0 84% 60%;
+    --error-light: 0 93% 94%;
+
+    /* Component tokens */
+    --background: var(--bg-dark);
+    --foreground: var(--text-light);
+    --card: var(--bg-surface);
+    --card-foreground: var(--text-light);
+    --popover: var(--bg-surface);
+    --popover-foreground: var(--text-light);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--bg-surface-light);
+    --secondary-foreground: var(--text-light);
+    --muted: var(--bg-surface-light);
+    --muted-foreground: var(--text-muted);
+    --accent-foreground: var(--text-light);
+    --destructive: var(--error);
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--border-dark);
+    --input: var(--border-dark);
+    --ring: var(--primary);
+    --radius: 0.5rem;
+
+    /* Wizard light theme */
+    --wizard-bg: var(--bg-light);
+    --wizard-card: var(--bg-card);
+    --wizard-text: var(--text-dark);
+    --wizard-text-muted: var(--text-dark-muted);
+    --wizard-border: var(--border-light);
+
+    /* Sidebar (not used but required) */
+    --sidebar-background: var(--bg-surface);
+    --sidebar-foreground: var(--text-light);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: var(--bg-surface-light);
+    --sidebar-accent-foreground: var(--text-light);
+    --sidebar-border: var(--border-dark);
+    --sidebar-ring: var(--primary-light);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer components {
+  /* Hero text gradient */
+  .text-gradient {
+    @apply bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent;
+  }
+
+  /* Split panel layouts */
+  .split-panel {
+    @apply grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden;
+  }
+
+  .split-panel-dark {
+    @apply bg-bg-surface p-8 lg:p-12;
+  }
+
+  .split-panel-light {
+    @apply bg-stone-200/80 p-8 lg:p-12;
+  }
+
+  /* Card variants */
+  .card-dark {
+    @apply bg-bg-surface rounded-2xl border border-border-dark;
+  }
+
+  .card-light {
+    @apply bg-white rounded-2xl border border-wizard-border shadow-lg shadow-black/5;
+  }
+
+  /* Wizard step indicator */
+  .step-indicator {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300;
+  }
+
+  .step-indicator-active {
+    @apply bg-primary text-white;
+  }
+
+  .step-indicator-complete {
+    @apply bg-success text-white;
+  }
+
+  .step-indicator-inactive {
+    @apply bg-wizard-border text-wizard-text-muted;
+  }
+
+  /* Plan cards */
+  .plan-card {
+    @apply card-light p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30;
+  }
+
+  .plan-card-selected {
+    @apply border-2 border-primary bg-primary/5 shadow-xl shadow-primary/10;
+  }
+
+  /* Toast styles */
+  .toast-success {
+    @apply bg-success text-white;
+  }
+
+  .toast-error {
+    @apply bg-error text-white;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-bg-surface;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border-dark rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-text-muted;
+}
