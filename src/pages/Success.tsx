@@ -7,6 +7,37 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/services/api';
 
+type PaymentUiStatus =
+    | 'processing'
+    | 'succeeded'
+    | 'requires_action'
+    | 'requires_payment_method'
+    | 'payment_failed'
+    | 'canceled'
+    | 'paid'
+    | 'unpaid'
+    | 'unknown';
+
+const getPaymentTitle = (status: PaymentUiStatus) => {
+  switch (status) {
+    case 'processing':
+      return 'Processing payment';
+    case 'succeeded':
+    case 'paid': // current app success
+      return 'Payment confirmed';
+    case 'requires_action':
+      return 'Action required';
+    case 'requires_payment_method':
+    case 'payment_failed':
+    case 'unpaid':
+      return 'Payment failed — try again';
+    case 'canceled':
+      return 'Payment canceled';
+    default:
+      return 'Processing payment';
+  }
+};
+
 const Success = () => {
   const navigate = useNavigate();
   const { selectedPlan, province, naicsCode, orderId, documentId, userEmail } = useWizard();
@@ -26,22 +57,55 @@ const Success = () => {
     const maxAttempts = 30;
     const pollInterval = setInterval(async () => {
       attempts++;
-      
+
       try {
         const orderSummary = await api.getOrderSummary(orderId);
-        
-        if (orderSummary.payment_status === 'paid') {
+
+        const backendStatus = (orderSummary.payment_status ?? 'processing') as string;
+
+        // Current mocked success condition
+        if (backendStatus === 'paid') {
           setPaymentStatus('paid');
           setIsPolling(false);
           clearInterval(pollInterval);
           toast.success('Payment confirmed! Your document is ready.');
-        } else if (attempts >= maxAttempts) {
+          return;
+        }
+
+        // Future Stripe-style statuses
+        const stripeLikeStatuses = new Set([
+          'processing',
+          'succeeded',
+          'requires_action',
+          'requires_payment_method',
+          'payment_failed',
+          'canceled',
+        ]);
+
+        if (stripeLikeStatuses.has(backendStatus)) {
+          setPaymentStatus(backendStatus);
+
+          // Stop polling for terminal states
+          if (
+              ['succeeded', 'payment_failed', 'requires_payment_method', 'canceled'].includes(
+                  backendStatus
+              )
+          ) {
+            setIsPolling(false);
+            clearInterval(pollInterval);
+          }
+        }
+
+        if (attempts >= maxAttempts) {
           setIsPolling(false);
           clearInterval(pollInterval);
-          toast.warning('Payment verification taking longer than expected. Check your email.');
+          toast.warning(
+              'Payment verification taking longer than expected. Check your email.'
+          );
         }
       } catch (error) {
         console.error('Failed to check payment status:', error);
+
         if (attempts >= maxAttempts) {
           setIsPolling(false);
           clearInterval(pollInterval);
@@ -124,7 +188,7 @@ const Success = () => {
             <CheckCircle className="w-10 h-10 text-success" />
           </div>
           <h1 className="font-heading text-4xl text-wizard-text mb-3">
-            Payment Confirmed!
+            {getPaymentTitle(isPolling ? 'processing' : (paymentStatus as PaymentUiStatus))}
           </h1>
           <p className="text-wizard-text-muted text-lg">
             Your editable Health & Safety Manual will be emailed to you shortly.
@@ -226,4 +290,5 @@ const Success = () => {
   );
 };
 
+export { getPaymentTitle };
 export default Success;
