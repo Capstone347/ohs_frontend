@@ -27,12 +27,21 @@ interface CreateOrderResponse {
   message: string;
 }
 
-interface UpdateCompanyDetailsRequest {
-  company_name: string;
-  province: string;
-  naics_codes: string;
-  logo?: File;
-}
+type UpdateCompanyDetailsRequest =
+  | {
+      company_name: string;
+      province: string;
+      logo?: File;
+      naics_codes: string[];
+      naics_code?: never;
+    }
+  | {
+      company_name: string;
+      province: string;
+      logo?: File;
+      naics_code: string;
+      naics_codes?: never;
+    };
 
 interface OrderSummary {
   order_id: number;
@@ -130,23 +139,29 @@ export const api = {
   },
 
   async updateCompanyDetails(
-    orderId: number,
-    data: UpdateCompanyDetailsRequest
-  ): Promise<OrderSummary> {
-    const formData = new FormData();
-    formData.append('company_name', data.company_name);
-    formData.append('province', data.province);
-    formData.append('naics_codes', data.naics_codes);
-    if (data.logo) {
-      formData.append('logo', data.logo);
-    }
+  orderId: number,
+  data: UpdateCompanyDetailsRequest
+): Promise<OrderSummary> {
+  const formData = new FormData();
+  formData.append('company_name', data.company_name);
+  formData.append('province', data.province);
+  
+  if ('naics_codes' in data) {
+    formData.append('naics_codes', JSON.stringify(data.naics_codes));
+  } else {
+    formData.append('naics_code', data.naics_code);
+  }
 
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/company-details`, {
-      method: 'PATCH',
-      body: formData,
-    });
-    return handleResponse<OrderSummary>(response);
-  },
+  if (data.logo) {
+    formData.append('logo', data.logo);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/company-details`, {
+    method: 'PATCH',
+    body: formData,
+  });
+  return handleResponse<OrderSummary>(response);
+},
 
   async generatePreview(orderId: number): Promise<GeneratePreviewResponse> {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}/generate-preview`, {
