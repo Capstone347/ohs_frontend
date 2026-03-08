@@ -6,14 +6,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/services/api';
-
-const ACCEPTED_PAYMENT_METHODS = [
-  { name: 'Visa', icon: '💳' },
-  { name: 'Mastercard', icon: '💳' },
-  { name: 'Amex', icon: '💳' },
-  { name: 'Apple Pay', icon: '🍎' },
-  { name: 'Google Pay', icon: '📱' },
-];
+import PaymentMethodBadges from '@/components/PaymentMethodBadges';
 
 const Step5 = () => {
   const navigate = useNavigate();
@@ -105,15 +98,8 @@ const Step5 = () => {
           No card details are collected on this site.
         </p>
 
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          {ACCEPTED_PAYMENT_METHODS.map((method) => (
-            <span
-              key={method.name}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-wizard-bg border border-wizard-border text-wizard-text-muted text-xs font-medium"
-            >
-              {method.icon} {method.name}
-            </span>
-          ))}
+<div className="mb-6">
+            <PaymentMethodBadges />
         </div>
 
         <Button
