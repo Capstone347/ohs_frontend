@@ -34,6 +34,14 @@ interface UpdateCompanyDetailsRequest {
   logo?: File;
 }
 
+interface OrderDocument {
+  document_id: number;
+  access_token: string;
+  token_expires_at: string;
+  generated_at: string;
+  file_format: string;
+}
+
 interface OrderSummary {
   order_id: number;
   user_email: string;
@@ -50,6 +58,7 @@ interface OrderSummary {
     description: string;
     price: number;
   };
+  documents: OrderDocument[];
   created_at: string;
   updated_at: string;
 }
@@ -86,11 +95,13 @@ interface LegalAcknowledgmentResponse {
   message: string;
 }
 
-interface CreatePaymentIntentResponse {
-  client_secret: string;
-  payment_intent_id: string;
-  amount: number;
-  currency: string;
+interface CreateCheckoutSessionResponse {
+  checkout_session_id: string;
+  checkout_url: string;
+}
+
+interface StripeConfigResponse {
+  publishable_key: string;
 }
 
 class ApiError extends Error {
@@ -178,6 +189,16 @@ export const api = {
     return response.blob();
   },
 
+  async downloadOrderDocument(orderId: number, token: string): Promise<Blob> {
+    const response = await fetch(
+      `${API_BASE_URL}/orders/${orderId}/download?token=${token}`
+    );
+    if (!response.ok) {
+      throw new ApiError(response.status, 'Failed to download document');
+    }
+    return response.blob();
+  },
+
   async getOrderSummary(orderId: number): Promise<OrderSummary> {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}/summary`);
     return handleResponse<OrderSummary>(response);
@@ -194,14 +215,16 @@ export const api = {
     return handleResponse<LegalAcknowledgmentResponse>(response);
   },
 
-  async createPaymentIntent(orderId: number): Promise<CreatePaymentIntentResponse> {
-    const response = await fetch(`${API_BASE_URL}/payments/orders/${orderId}/payment-intent`, {
+  async createCheckoutSession(orderId: number): Promise<CreateCheckoutSessionResponse> {
+    const response = await fetch(`${API_BASE_URL}/payments/orders/${orderId}/create-checkout-session`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
-    return handleResponse<CreatePaymentIntentResponse>(response);
+    return handleResponse<CreateCheckoutSessionResponse>(response);
+  },
+
+  async getStripeConfig(): Promise<StripeConfigResponse> {
+    const response = await fetch(`${API_BASE_URL}/payments/stripe/config`);
+    return handleResponse<StripeConfigResponse>(response);
   },
 
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
@@ -217,11 +240,13 @@ export type {
   CreateOrderResponse,
   UpdateCompanyDetailsRequest,
   OrderSummary,
+  OrderDocument,
   GeneratePreviewResponse,
   DocumentDetails,
   LegalAcknowledgmentRequest,
   LegalAcknowledgmentResponse,
-  CreatePaymentIntentResponse,
+  CreateCheckoutSessionResponse,
+  StripeConfigResponse,
 };
 
 export { ApiError };

@@ -10,6 +10,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Success from "./pages/Success";
 import Orders from "./pages/Orders";
+import OrderPayment from "./pages/OrderPayment";
+import OrderSuccess from "./pages/OrderSuccess";
 import NotFound from "./pages/NotFound";
 
 // Wizard
@@ -44,6 +46,10 @@ const App = () => (
             
             <Route path="/app/success" element={<Success />} />
             <Route path="/app/orders" element={<Orders />} />
+            
+            {/* Stripe redirect routes */}
+            <Route path="/orders/:orderId/payment" element={<OrderPayment />} />
+            <Route path="/orders/:orderId/success" element={<OrderSuccess />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
