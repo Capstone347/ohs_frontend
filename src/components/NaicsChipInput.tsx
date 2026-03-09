@@ -88,7 +88,7 @@ export function NaicsChipInput(props: {
           onChange={(e) => setText(e.target.value)}
           placeholder={cleanValue.length >= max ? `Max ${max} codes` : 'Type code and press Enter'}
           disabled={cleanValue.length >= max}
-          className="min-w-[180px] flex-1 bg-transparent p-2 text-sm outline-none placeholder:text-wizard-text-muted"
+          className="min-w-[180px] flex-1 bg-transparent p-2 text-sm text-gray-900 outline-none placeholder:text-gray-500"
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
