@@ -9,6 +9,10 @@ interface Plan {
   features: string[];
 }
 
+interface RequestOtpRequest {
+  email: string;
+}
+
 interface PlansResponse {
   plans: Plan[];
 }
@@ -139,7 +143,29 @@ export const api = {
     });
     return handleResponse<CreateOrderResponse>(response);
   },
+  async requestOtp(email: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/request-otp`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
 
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: { message: 'Request failed' } }));
+
+    throw new ApiError(
+      response.status,
+      error.error?.message || 'Request failed',
+      error.error?.details
+    );
+  }
+  },
+
+  
   async updateCompanyDetails(
     orderId: number,
     data: UpdateCompanyDetailsRequest
