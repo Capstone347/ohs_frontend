@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from '@/context/WizardContext';
 import { provinces, getTOCForPlan } from '@/data/mockData';
-import { Loader2, FileText, Shield, BookOpen, CheckCircle2, Download } from 'lucide-react';
+import { Loader2, FileText, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -17,23 +16,31 @@ import { toast } from 'sonner';
 import { api, ApiError } from '@/services/api';
 import { provinceNameToCode } from '@/lib/provinceMapping';
 
+// ✅ add these components (create in separate files or inline temporarily)
+import { NaicsInline } from '@/components/NaicsInline';
+import { NaicsChipInput } from '@/components/NaicsChipInput';
+
+const MAX_NAICS = 10;
+const USE_NAICS_CODES = import.meta.env.VITE_NAICS_CODES === 'true';
+
 const Step3 = () => {
   const navigate = useNavigate();
   const {
     selectedPlan,
     hasIndustryAddOn,
     province,
-    naicsCode,
+    naicsCodes,
     companyName,
     logoFile,
     tocGenerated,
     orderId,
     documentId,
     setProvince,
-    setNaicsCode,
+    setNaicsCodes,
     setTocGenerated,
     setDocumentId,
   } = useWizard();
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -61,20 +68,24 @@ const Step3 = () => {
     }
 
     return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [tocGenerated, documentId, previewUrl]);
 
-  const validateNaicsCode = (code: string) => {
-    if (!code) return 'NAICS code is required';
-    if (!/^\d{2,6}$/.test(code)) return 'NAICS code must be 2-6 digits';
+  const validateNaicsCodes = (codes: string[]) => {
+    const clean = (codes ?? []).map((c) => c.trim()).filter(Boolean);
+
+    if (clean.length === 0) return 'At least one NAICS code is required';
+    if (clean.length > MAX_NAICS) return `You can add up to ${MAX_NAICS} NAICS codes`;
+
+    for (const c of clean) {
+      if (!/^\d{2,6}$/.test(c)) return `NAICS code must be 2–6 digits: "${c}"`;
+    }
     return '';
   };
 
   const handleGenerateTOC = async () => {
-    const validationError = validateNaicsCode(naicsCode);
+    const validationError = validateNaicsCodes(naicsCodes);
     if (validationError) {
       setError(validationError);
       return;
@@ -91,25 +102,36 @@ const Step3 = () => {
       navigate('/app/step-2');
       return;
     }
-
     setError('');
     setIsGenerating(true);
-    
-    try {
+
+    try 
+    {
       const provinceCode = provinceNameToCode(province);
-      
-      await api.updateCompanyDetails(orderId, {
+      const base = {
         company_name: companyName,
         province: provinceCode,
-        naics_codes: naicsCode,
         logo: logoFile || undefined,
+      };
+
+      if (USE_NAICS_CODES) {
+        await api.updateCompanyDetails(orderId, {
+        ...base,
+        naics_codes: naicsCodes,
       });
+      } else {
+        await api.updateCompanyDetails(orderId, {
+        ...base,
+        naics_code: naicsCodes[0] ?? '',
+        });
+      }
 
       const response = await api.generatePreview(orderId);
       setDocumentId(response.document_id);
       setTocGenerated(true);
       toast.success('Document preview generated!');
-    } catch (error) {
+    } 
+    catch (error) {
       console.error('Failed to generate preview:', error);
       if (error instanceof ApiError) {
         toast.error(error.message);
@@ -123,13 +145,15 @@ const Step3 = () => {
 
   const tocItems = selectedPlan ? getTOCForPlan(selectedPlan.id, hasIndustryAddOn) : [];
 
-  const planName = selectedPlan?.id === 'comprehensive' 
-    ? 'Comprehensive' 
+  const planName = selectedPlan?.id === 'comprehensive'
+    ? 'Comprehensive'
     : 'Basic';
-  
-  const fullPlanName = hasIndustryAddOn 
-    ? `${planName} + Industry-Specific` 
+
+  const fullPlanName = hasIndustryAddOn
+    ? `${planName} + Industry-Specific`
     : planName;
+
+  const hasAnyNaics = (naicsCodes?.length ?? 0) > 0;
 
   return (
     <div className="space-y-8">
@@ -138,7 +162,7 @@ const Step3 = () => {
           Enter Your Industry Code
         </h1>
         <p className="text-wizard-text-muted text-lg">
-          Generate a tailored Health & Safety Manual based on your NAICS code.
+          Generate a tailored Health & Safety Manual based on your NAICS code(s).
         </p>
       </div>
 
@@ -168,36 +192,32 @@ const Step3 = () => {
             </Select>
           </div>
 
-          {/* NAICS Code Input */}
+          {/* NAICS Codes Chip Input */}
           <div>
             <label className="block text-sm font-medium text-wizard-text mb-2">
-              NAICS Industry Code
+              NAICS Industry Code(s)
             </label>
-            <Input
-              type="text"
-              placeholder="e.g., 23 (Construction) or 31 (Manufacturing)"
-              value={naicsCode}
-              onChange={(e) => {
-                setNaicsCode(e.target.value);
+
+            <NaicsChipInput
+              value={naicsCodes}
+              onChange={(next) => {
+                setNaicsCodes(next);
+                // clear only "required" errors as user edits; keep chip component warnings if any
                 setError('');
               }}
-              className={`h-12 bg-white border-wizard-border text-wizard-text placeholder:text-wizard-text-muted ${
-                error ? 'border-error focus:border-error focus:ring-error' : ''
-              }`}
+              max={MAX_NAICS}
+              error={error}
+              onErrorChange={(msg) => {
+                // chip-level warnings/errors (invalid, duplicate, max) show here
+                setError(msg);
+              }}
             />
-            {error ? (
-              <p className="text-error text-sm mt-1">{error}</p>
-            ) : (
-              <p className="text-wizard-text-muted text-xs mt-1">
-                Enter a 2-6 digit NAICS code
-              </p>
-            )}
           </div>
         </div>
 
         <Button
           onClick={handleGenerateTOC}
-          disabled={isGenerating || !naicsCode}
+          disabled={isGenerating || !hasAnyNaics}
           variant="outline"
           className="bg-wizard-text text-white border-wizard-text hover:bg-wizard-text/90 hover:text-white"
         >
@@ -226,7 +246,7 @@ const Step3 = () => {
           <h2 className="font-heading text-xl text-wizard-text mb-4">
             Your H&S Manual Preview
           </h2>
-          
+
           {/* Document Preview Card */}
           <div className="relative bg-white rounded-2xl shadow-xl border border-wizard-border overflow-hidden">
             {/* Document Header */}
@@ -240,7 +260,8 @@ const Step3 = () => {
                     Health & Safety Manual
                   </h3>
                   <p className="text-sm text-wizard-text-muted">
-                    {fullPlanName} Edition • {province} • NAICS {naicsCode}
+                    {fullPlanName} Edition • {province} • NAICS{' '}
+                    <NaicsInline codes={naicsCodes} />
                   </p>
                 </div>
               </div>
@@ -267,13 +288,13 @@ const Step3 = () => {
                       />
                     </object>
                   </div>
-                  
+
                   {/* Gradient Fade Overlay - Medium style */}
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-50% to-white pointer-events-none" />
-                  
+
                   {/* Bottom blur section */}
                   <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-white via-white/95 to-transparent backdrop-blur-[1px] pointer-events-none" />
-                  
+
                   {/* Call to Action at bottom */}
                   <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center justify-center pointer-events-none">
                     <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 md:px-8 py-4 border border-primary/20 shadow-2xl">
@@ -285,7 +306,7 @@ const Step3 = () => {
                       </p>
                     </div>
                   </div>
-                  
+
                   {/* Invisible overlay to prevent interaction */}
                   <div className="absolute inset-0" />
                 </>
@@ -303,7 +324,7 @@ const Step3 = () => {
                 <span>Fully editable DOCX format</span>
               </div>
               <div className="text-sm text-wizard-text-muted">
-                Generated for NAICS {naicsCode}
+                Generated for NAICS <NaicsInline codes={naicsCodes} />
               </div>
             </div>
           </div>

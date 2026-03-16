@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Plan as MockPlan, plans, industryAddOn } from '@/data/mockData';
+import { Plan as MockPlan, industryAddOn } from '@/data/mockData';
 import { Plan as ApiPlan } from '@/services/api';
 
 interface WizardState {
@@ -8,7 +8,7 @@ interface WizardState {
   logoFile: File | null;
   logoPreview: string | null;
   province: string;
-  naicsCode: string;
+  naicsCodes: string[];
   companyName: string;
   userEmail: string;
   fullName: string;
@@ -22,12 +22,17 @@ interface WizardState {
 }
 
 interface WizardContextType extends WizardState {
+  // Back-compat API 
+  naicsCode: string;
+  setNaicsCode: (code: string) => void;
+  // NEW API 
+  setNaicsCodes: (codes: string[]) => void;
   setSelectedPlan: (plan: MockPlan | null) => void;
   setHasIndustryAddOn: (hasAddOn: boolean) => void;
   setLogoFile: (file: File | null) => void;
   setLogoPreview: (preview: string | null) => void;
   setProvince: (province: string) => void;
-  setNaicsCode: (code: string) => void;
+
   setCompanyName: (name: string) => void;
   setUserEmail: (email: string) => void;
   setFullName: (name: string) => void;
@@ -37,6 +42,7 @@ interface WizardContextType extends WizardState {
   setOrderId: (id: number | null) => void;
   setDocumentId: (id: number | null) => void;
   setApiPlans: (plans: ApiPlan[]) => void;
+
   resetWizard: () => void;
   getTotalPrice: () => number;
 }
@@ -49,7 +55,7 @@ const initialState: WizardState = {
   logoFile: null,
   logoPreview: null,
   province: 'Ontario',
-  naicsCode: '',
+  naicsCodes: [],
   companyName: '',
   userEmail: '',
   fullName: '',
@@ -89,8 +95,15 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setState((prev) => ({ ...prev, province }));
   };
 
+  // NEW setter
+  const setNaicsCodes = (codes: string[]) => {
+    setState((prev) => ({ ...prev, naicsCodes: codes }));
+  };
+
+  // Back-compat setter: setting a single code overwrites array to code
   const setNaicsCode = (code: string) => {
-    setState((prev) => ({ ...prev, naicsCode: code }));
+    const next = code?.trim();
+    setState((prev) => ({ ...prev, naicsCodes: next ? [next] : [] }));
   };
 
   const setCompanyName = (name: string) => {
@@ -135,22 +148,27 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const getTotalPrice = () => {
     let total = state.selectedPlan?.price || 0;
-    if (state.hasIndustryAddOn) {
-      total += industryAddOn.price;
-    }
+    if (state.hasIndustryAddOn) total += industryAddOn.price;
     return total;
   };
+
+  // Back-compat derived value
+  const naicsCode = state.naicsCodes[0] ?? '';
 
   return (
     <WizardContext.Provider
       value={{
         ...state,
+        // Back-compat
+        naicsCode,
+        setNaicsCode,
+        // New
+        setNaicsCodes,
         setSelectedPlan,
         setHasIndustryAddOn,
         setLogoFile,
         setLogoPreview,
         setProvince,
-        setNaicsCode,
         setCompanyName,
         setUserEmail,
         setFullName,
