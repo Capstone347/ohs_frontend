@@ -1,24 +1,24 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { plans, industryAddOn } from '@/data/mockData';
-import { useWizard } from '@/context/WizardContext';
-import { Check, Plus, Sparkles, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { api, ApiError } from '@/services/api';
-import { toast } from 'sonner';
-import { provinceNameToCode } from '@/lib/provinceMapping';
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { plans, industryAddOn } from "@/data/mockData";
+import { useWizard } from "@/context/WizardContext";
+import { Check, Plus, Sparkles, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { api, ApiError } from "@/services/api";
+import { toast } from "sonner";
+import { provinceNameToCode } from "@/lib/provinceMapping";
 
 const Step1 = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { 
-    selectedPlan, 
-    setSelectedPlan, 
-    hasIndustryAddOn, 
-    setHasIndustryAddOn, 
+  const {
+    selectedPlan,
+    setSelectedPlan,
+    hasIndustryAddOn,
+    setHasIndustryAddOn,
     getTotalPrice,
     userEmail,
     fullName,
@@ -32,8 +32,8 @@ const Step1 = () => {
 
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState("");
+  const [nameError, setNameError] = useState("");
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -42,8 +42,8 @@ const Step1 = () => {
         const response = await api.getPlans();
         setApiPlans(response.plans);
       } catch (error) {
-        console.error('Failed to fetch plans:', error);
-        toast.error('Failed to load plans. Using default plans.');
+        console.error("Failed to fetch plans:", error);
+        toast.error("Failed to load plans. Using default plans.");
       } finally {
         setIsLoadingPlans(false);
       }
@@ -54,7 +54,7 @@ const Step1 = () => {
   }, []); // Only run once on mount
 
   useEffect(() => {
-    const planId = searchParams.get('plan');
+    const planId = searchParams.get("plan");
     if (planId) {
       const plan = plans.find((p) => p.id === planId);
       if (plan) {
@@ -65,30 +65,30 @@ const Step1 = () => {
 
   const validateEmail = (email: string): boolean => {
     if (!email) {
-      setEmailError('Email is required');
+      setEmailError("Email is required");
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError("Please enter a valid email address");
       return false;
     }
-    setEmailError('');
+    setEmailError("");
     return true;
   };
 
   const validateName = (name: string): boolean => {
     if (!name || name.trim().length === 0) {
-      setNameError('Full name is required');
+      setNameError("Full name is required");
       return false;
     }
-    setNameError('');
+    setNameError("");
     return true;
   };
 
   const handleContinue = async () => {
     if (!selectedPlan) {
-      toast.error('Please select a plan');
+      toast.error("Please select a plan");
       return;
     }
 
@@ -96,13 +96,18 @@ const Step1 = () => {
     const isNameValid = validateName(fullName);
 
     if (!isEmailValid || !isNameValid) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     setIsCreatingOrder(true);
     try {
-      const planId = selectedPlan.id === 'basic' ? 1 : selectedPlan.id === 'comprehensive' ? 2 : 1;
+      const planId =
+        selectedPlan.id === "basic"
+          ? 1
+          : selectedPlan.id === "comprehensive"
+            ? 2
+            : 1;
       const jurisdictionCode = provinceNameToCode(province);
 
       const response = await api.createOrder({
@@ -113,14 +118,14 @@ const Step1 = () => {
       });
 
       setOrderId(response.order_id);
-      toast.success('Order created successfully!');
-      navigate('/app/step-2');
+      toast.success("Order created successfully!");
+      navigate("/app/step-2");
     } catch (error) {
-      console.error('Failed to create order:', error);
+      console.error("Failed to create order:", error);
       if (error instanceof ApiError) {
         toast.error(error.message);
       } else {
-        toast.error('Failed to create order. Please try again.');
+        toast.error("Failed to create order. Please try again.");
       }
     } finally {
       setIsCreatingOrder(false);
@@ -145,7 +150,9 @@ const Step1 = () => {
         transition={{ duration: 0.4 }}
         className="bg-white rounded-2xl border border-wizard-border shadow-lg shadow-black/5 p-8"
       >
-        <h3 className="font-heading text-xl text-wizard-text mb-4">Your Information</h3>
+        <h3 className="font-heading text-xl text-wizard-text mb-4">
+          Your Information
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-wizard-text mb-2">
@@ -160,11 +167,13 @@ const Step1 = () => {
                 if (nameError) validateName(e.target.value);
               }}
               className={cn(
-                'h-12 bg-white border-wizard-border text-wizard-text',
-                nameError && 'border-error focus:border-error focus:ring-error'
+                "h-12 bg-white border-wizard-border text-wizard-text",
+                nameError && "border-error focus:border-error focus:ring-error",
               )}
             />
-            {nameError && <p className="text-error text-sm mt-1">{nameError}</p>}
+            {nameError && (
+              <p className="text-error text-sm mt-1">{nameError}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-wizard-text mb-2">
@@ -179,11 +188,14 @@ const Step1 = () => {
                 if (emailError) validateEmail(e.target.value);
               }}
               className={cn(
-                'h-12 bg-white border-wizard-border text-wizard-text',
-                emailError && 'border-error focus:border-error focus:ring-error'
+                "h-12 bg-white border-wizard-border text-wizard-text",
+                emailError &&
+                  "border-error focus:border-error focus:ring-error",
               )}
             />
-            {emailError && <p className="text-error text-sm mt-1">{emailError}</p>}
+            {emailError && (
+              <p className="text-error text-sm mt-1">{emailError}</p>
+            )}
           </div>
         </div>
       </motion.div>
@@ -199,56 +211,58 @@ const Step1 = () => {
           </div>
         ) : (
           plans.map((plan, index) => (
-          <motion.div
-            key={plan.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-          >
-            <button
-              onClick={() => setSelectedPlan(plan)}
-              className={cn(
-                'plan-card w-full text-left',
-                selectedPlan?.id === plan.id && 'plan-card-selected'
-              )}
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-heading text-2xl text-wizard-text">
-                      {plan.name}
-                    </h3>
-                    {selectedPlan?.id === plan.id && (
-                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="w-4 h-4 text-white" />
-                      </div>
-                    )}
+              <button
+                onClick={() => setSelectedPlan(plan)}
+                className={cn(
+                  "plan-card w-full text-left",
+                  selectedPlan?.id === plan.id && "plan-card-selected",
+                )}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-heading text-2xl text-wizard-text">
+                        {plan.name}
+                      </h3>
+                      {selectedPlan?.id === plan.id && (
+                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-wizard-text-muted text-sm mb-4">
+                      Most suitable for: {plan.suitable}
+                    </p>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {plan.features.map((feature) => (
+                        <li
+                          key={feature}
+                          className="flex items-start gap-2 text-sm text-wizard-text-muted"
+                        >
+                          <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <p className="text-wizard-text-muted text-sm mb-4">
-                    Most suitable for: {plan.suitable}
-                  </p>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {plan.features.map((feature) => (
-                      <li
-                        key={feature}
-                        className="flex items-start gap-2 text-sm text-wizard-text-muted"
-                      >
-                        <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="text-right flex-shrink-0">
+                    <span className="font-heading text-3xl text-wizard-text">
+                      ${plan.price}
+                    </span>
+                    <span className="text-wizard-text-muted text-sm block">
+                      CAD
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <span className="font-heading text-3xl text-wizard-text">
-                    ${plan.price}
-                  </span>
-                  <span className="text-wizard-text-muted text-sm block">CAD</span>
-                </div>
-              </div>
-            </button>
-          </motion.div>
-        ))
+              </button>
+            </motion.div>
+          ))
         )}
       </div>
 
@@ -263,23 +277,25 @@ const Step1 = () => {
           <p className="text-sm font-medium text-wizard-text-muted uppercase tracking-wide">
             Step 2: Enhance Your Package (Optional)
           </p>
-          
+
           <button
             onClick={() => setHasIndustryAddOn(!hasIndustryAddOn)}
             className={cn(
-              'w-full text-left rounded-xl border-2 p-6 transition-all duration-200',
+              "w-full text-left rounded-xl border-2 p-6 transition-all duration-200",
               hasIndustryAddOn
-                ? 'border-primary bg-primary/5 shadow-lg'
-                : 'border-border-light bg-white hover:border-primary/50 hover:shadow-md'
+                ? "border-primary bg-primary/5 shadow-lg"
+                : "border-border-light bg-white hover:border-primary/50 hover:shadow-md",
             )}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={cn(
-                    'w-8 h-8 rounded-lg flex items-center justify-center',
-                    hasIndustryAddOn ? 'bg-primary' : 'bg-primary/10'
-                  )}>
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center",
+                      hasIndustryAddOn ? "bg-primary" : "bg-primary/10",
+                    )}
+                  >
                     {hasIndustryAddOn ? (
                       <Check className="w-5 h-5 text-white" />
                     ) : (
@@ -313,7 +329,9 @@ const Step1 = () => {
                 <span className="font-heading text-2xl text-wizard-text">
                   +${industryAddOn.price}
                 </span>
-                <span className="text-wizard-text-muted text-sm block">CAD</span>
+                <span className="text-wizard-text-muted text-sm block">
+                  CAD
+                </span>
               </div>
             </div>
           </button>
@@ -332,13 +350,14 @@ const Step1 = () => {
               <p className="text-text-muted text-sm">Your Selection</p>
               <p className="text-text-light font-medium">
                 {selectedPlan.name}
-                {hasIndustryAddOn && ' + Industry-Specific Add-On'}
+                {hasIndustryAddOn && " + Industry-Specific Add-On"}
               </p>
             </div>
             <div className="text-right">
               <p className="text-text-muted text-sm">Total</p>
               <p className="font-heading text-3xl text-text-light">
-                ${getTotalPrice()} <span className="text-sm text-text-muted">CAD</span>
+                ${getTotalPrice()}{" "}
+                <span className="text-sm text-text-muted">CAD</span>
               </p>
             </div>
           </div>
@@ -347,7 +366,8 @@ const Step1 = () => {
 
       <div className="flex justify-end pt-4">
         <Button
-          onClick={handleContinue || isCreatingOrder || !userEmail || !fullName}
+          onClick={handleContinue}
+          disabled={isCreatingOrder || !userEmail || !fullName}
           size="lg"
           className="px-8"
         >
@@ -357,7 +377,7 @@ const Step1 = () => {
               Creating Order...
             </>
           ) : (
-            'Continue'
+            "Continue"
           )}
         </Button>
       </div>
