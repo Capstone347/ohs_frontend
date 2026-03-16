@@ -9,6 +9,7 @@ interface WizardState {
   logoPreview: string | null;
   province: string;
   naicsCode: string;
+  businessDescription: string;
   companyName: string;
   userEmail: string;
   fullName: string;
@@ -28,6 +29,7 @@ interface WizardContextType extends WizardState {
   setLogoPreview: (preview: string | null) => void;
   setProvince: (province: string) => void;
   setNaicsCode: (code: string) => void;
+    setBusinessDescription: (description: string) => void;
   setCompanyName: (name: string) => void;
   setUserEmail: (email: string) => void;
   setFullName: (name: string) => void;
@@ -50,6 +52,7 @@ const initialState: WizardState = {
   logoPreview: null,
   province: 'Ontario',
   naicsCode: '',
+  businessDescription: '',
   companyName: '',
   userEmail: '',
   fullName: '',
@@ -92,7 +95,9 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const setNaicsCode = (code: string) => {
     setState((prev) => ({ ...prev, naicsCode: code }));
   };
-
+  const setBusinessDescription = (description: string) => {
+    setState((prev) => ({ ...prev, businessDescription: description }));
+  };
   const setCompanyName = (name: string) => {
     setState((prev) => ({ ...prev, companyName: name }));
   };
@@ -151,6 +156,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setLogoPreview,
         setProvince,
         setNaicsCode,
+        setBusinessDescription,
         setCompanyName,
         setUserEmail,
         setFullName,

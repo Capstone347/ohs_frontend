@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/toaster";
+// import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -28,13 +28,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <WizardProvider>
-        <Toaster />
+        {/* <Toaster /> */}
         <Sonner position="bottom-right" />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            
+
             {/* Wizard Routes */}
             <Route path="/app" element={<WizardShell />}>
               <Route path="step-1" element={<Step1 />} />
@@ -43,9 +43,10 @@ const App = () => (
               <Route path="step-4" element={<Step4 />} />
               <Route path="step-5" element={<Step5 />} />
             </Route>
-            
+
             <Route path="/app/success" element={<Success />} />
             <Route path="/app/orders" element={<Orders />} />
+
             
             {/* Stripe redirect routes */}
             <Route path="/orders/:orderId/payment" element={<OrderPayment />} />
