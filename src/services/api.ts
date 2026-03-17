@@ -1,12 +1,13 @@
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
+// --- Existing interfaces ---
+
 interface Plan {
-  plan_id: number;
+  id: number;
   name: string;
   slug: string;
   description: string;
-  price: number;
-  features: string[];
+  base_price: string;
 }
 
 interface PlansResponse {
@@ -104,6 +105,76 @@ interface StripeConfigResponse {
   publishable_key: string;
 }
 
+// --- New interfaces for dashboard ---
+
+interface AuthUser {
+  id: number;
+  email: string;
+  full_name?: string;
+}
+
+interface OrderListItem {
+  order_id: number;
+  created_at: string;
+  order_status: string;
+  payment_status: string;
+  total_amount: string;
+  currency: string;
+  jurisdiction: string;
+  company_name: string;
+  plan_name: string;
+  naics_codes: string[];
+}
+
+interface OrdersListResponse {
+  items: OrderListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+interface TimelineStep {
+  step: string;
+  status: 'completed' | 'current' | 'pending';
+  timestamp: string | null;
+}
+
+interface OrderDetailCompany {
+  id: number;
+  name: string;
+  logo_id: number | null;
+  province: string;
+  business_description: string | null;
+  naics_codes: string[];
+}
+
+interface OrderDetail {
+  order_id: number;
+  created_at: string;
+  completed_at: string | null;
+  jurisdiction: string;
+  total_amount: string;
+  is_industry_specific: boolean;
+  company: OrderDetailCompany;
+  plan_name: string;
+  order_status: string;
+  payment_status: string;
+  currency: string;
+  documents: OrderDocument[];
+  timeline: TimelineStep[];
+  naics_codes: string[];
+}
+
+interface OrdersQueryParams {
+  query?: string;
+  order_status?: string;
+  page?: number;
+  page_size?: number;
+}
+
+// --- Error handling ---
+
 class ApiError extends Error {
   constructor(public status: number, message: string, public details?: any) {
     super(message);
@@ -113,17 +184,81 @@ class ApiError extends Error {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    if (response.status === 401) {
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
     const error = await response.json().catch(() => ({ error: { message: 'Request failed' } }));
     throw new ApiError(
       response.status,
-      error.error?.message || 'Request failed',
+      error.error?.message || error.detail || 'Request failed',
       error.error?.details
     );
   }
   return response.json();
 }
 
+function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
+  });
+}
+
 export const api = {
+  // --- Auth methods ---
+
+  async requestOtp(email: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/auth/request-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
+  async verifyOtp(email: string, otp: string): Promise<{ user: AuthUser }> {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, otp }),
+    });
+    return handleResponse(response);
+  },
+
+  async getMe(): Promise<AuthUser> {
+    const response = await authFetch(`${API_BASE_URL}/auth/me`);
+    return handleResponse<AuthUser>(response);
+  },
+
+  async logout(): Promise<{ message: string }> {
+    const response = await authFetch(`${API_BASE_URL}/auth/logout`, {
+      method: 'POST',
+    });
+    return handleResponse(response);
+  },
+
+  // --- Dashboard methods ---
+
+  async getOrders(params: OrdersQueryParams = {}): Promise<OrdersListResponse> {
+    const searchParams = new URLSearchParams();
+    if (params.query) searchParams.set('query', params.query);
+    if (params.order_status) searchParams.set('order_status', params.order_status);
+    if (params.page) searchParams.set('page', String(params.page));
+    if (params.page_size) searchParams.set('page_size', String(params.page_size));
+
+    const qs = searchParams.toString();
+    const response = await authFetch(`${API_BASE_URL}/orders${qs ? `?${qs}` : ''}`);
+    return handleResponse<OrdersListResponse>(response);
+  },
+
+  async getOrderDetail(orderId: number): Promise<OrderDetail> {
+    const response = await authFetch(`${API_BASE_URL}/orders/${orderId}`);
+    return handleResponse<OrderDetail>(response);
+  },
+
+  // --- Existing methods (updated with authFetch where appropriate) ---
+
   async getPlans(): Promise<PlansResponse> {
     const response = await fetch(`${API_BASE_URL}/plans`);
     return handleResponse<PlansResponse>(response);
@@ -132,9 +267,7 @@ export const api = {
   async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
     const response = await fetch(`${API_BASE_URL}/orders`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     return handleResponse<CreateOrderResponse>(response);
@@ -175,13 +308,13 @@ export const api = {
   },
 
   async getDocumentDetails(documentId: number): Promise<DocumentDetails> {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}`);
+    const response = await authFetch(`${API_BASE_URL}/documents/${documentId}`);
     return handleResponse<DocumentDetails>(response);
   },
 
   async downloadFinalDocument(documentId: number, token: string): Promise<Blob> {
     const response = await fetch(
-      `${API_BASE_URL}/documents/${documentId}/download?token=${token}`
+      `${API_BASE_URL}/documents/${documentId}/download?token=${encodeURIComponent(token)}`
     );
     if (!response.ok) {
       throw new ApiError(response.status, 'Failed to download document');
@@ -190,8 +323,8 @@ export const api = {
   },
 
   async downloadOrderDocument(orderId: number, token: string): Promise<Blob> {
-    const response = await fetch(
-      `${API_BASE_URL}/orders/${orderId}/download?token=${token}`
+    const response = await authFetch(
+      `${API_BASE_URL}/orders/${orderId}/download?token=${encodeURIComponent(token)}`
     );
     if (!response.ok) {
       throw new ApiError(response.status, 'Failed to download document');
@@ -200,16 +333,14 @@ export const api = {
   },
 
   async getOrderSummary(orderId: number): Promise<OrderSummary> {
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/summary`);
+    const response = await authFetch(`${API_BASE_URL}/orders/${orderId}/summary`);
     return handleResponse<OrderSummary>(response);
   },
 
   async acceptLegalTerms(orderId: number, data: LegalAcknowledgmentRequest): Promise<LegalAcknowledgmentResponse> {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}/acknowledge-terms`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     return handleResponse<LegalAcknowledgmentResponse>(response);
@@ -247,6 +378,13 @@ export type {
   LegalAcknowledgmentResponse,
   CreateCheckoutSessionResponse,
   StripeConfigResponse,
+  AuthUser,
+  OrderListItem,
+  OrdersListResponse,
+  TimelineStep,
+  OrderDetail,
+  OrderDetailCompany,
+  OrdersQueryParams,
 };
 
 export { ApiError };

@@ -1,17 +1,43 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+import { api, ApiError } from '@/services/api';
+
+const RESEND_COOLDOWN = 60;
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
+
   const [email, setEmail] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const redirectTo = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard/orders';
+
+  // If already authenticated, redirect
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [isAuthenticated, navigate, redirectTo]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,13 +45,40 @@ const Login = () => {
       toast.error('Please enter your email address');
       return;
     }
-    
+
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    setCodeSent(true);
-    toast.success('Code sent! Check your email.');
+    try {
+      await api.requestOtp(email);
+      setCodeSent(true);
+      setResendCooldown(RESEND_COOLDOWN);
+      toast.success("If your email is registered, you'll receive a code.");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error('Something went wrong. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setIsLoading(true);
+    try {
+      await api.requestOtp(email);
+      setResendCooldown(RESEND_COOLDOWN);
+      toast.success("If your email is registered, you'll receive a code.");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error('Something went wrong. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -34,13 +87,27 @@ const Login = () => {
       toast.error('Please enter the complete 6-digit code');
       return;
     }
-    
+
     setIsLoading(true);
-    // Simulate verification
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    toast.success('Welcome back!');
-    navigate('/app/orders');
+    try {
+      await login(email, otp);
+      toast.success('Welcome back!');
+      navigate(redirectTo, { replace: true });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        toast.error('Invalid or expired code. Please try again.');
+      } else {
+        toast.error('Verification failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChangeEmail = () => {
+    setCodeSent(false);
+    setOtp('');
+    setResendCooldown(0);
   };
 
   return (
@@ -106,12 +173,12 @@ const Login = () => {
                   onChange={setOtp}
                 >
                   <InputOTPGroup>
-                    <InputOTPSlot index={0} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={1} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={2} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={3} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={4} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={5} className="w-12 h-14 text-lg" />
+                    <InputOTPSlot index={0} className="w-12 h-14 text-lg text-text-dark" />
+                    <InputOTPSlot index={1} className="w-12 h-14 text-lg text-text-dark" />
+                    <InputOTPSlot index={2} className="w-12 h-14 text-lg text-text-dark" />
+                    <InputOTPSlot index={3} className="w-12 h-14 text-lg text-text-dark" />
+                    <InputOTPSlot index={4} className="w-12 h-14 text-lg text-text-dark" />
+                    <InputOTPSlot index={5} className="w-12 h-14 text-lg text-text-dark" />
                   </InputOTPGroup>
                 </InputOTP>
               </div>
@@ -131,13 +198,25 @@ const Login = () => {
                 )}
               </Button>
 
-              <button
-                type="button"
-                onClick={() => setCodeSent(false)}
-                className="w-full text-center text-sm text-text-dark-muted hover:text-text-dark transition-colors"
-              >
-                Use a different email
-              </button>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendCooldown > 0 || isLoading}
+                  className="text-sm text-primary hover:underline disabled:text-text-dark-muted disabled:no-underline disabled:cursor-default transition-colors"
+                >
+                  {resendCooldown > 0
+                    ? `Resend code (${resendCooldown}s)`
+                    : 'Resend code'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleChangeEmail}
+                  className="text-sm text-text-dark-muted hover:text-text-dark transition-colors"
+                >
+                  Use a different email
+                </button>
+              </div>
             </form>
           )}
 

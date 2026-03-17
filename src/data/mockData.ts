@@ -14,16 +14,6 @@ export interface IndustryAddOn {
   features: string[];
 }
 
-export interface Order {
-  id: string;
-  date: string;
-  plan: string;
-  industryAddOn: boolean;
-  province: string;
-  naics: string;
-  status: 'processing' | 'delivered';
-}
-
 export const plans: Plan[] = [
   {
     id: 'basic',
@@ -114,36 +104,6 @@ export const getTOCForPlan = (planId: string, hasIndustryAddOn: boolean): string
   
   return baseTOC;
 };
-
-export const mockOrders: Order[] = [
-  {
-    id: 'OHS-2026-001234',
-    date: 'Jan 14, 2026',
-    plan: 'Basic',
-    industryAddOn: false,
-    province: 'Ontario',
-    naics: '23',
-    status: 'processing',
-  },
-  {
-    id: 'OHS-2025-000891',
-    date: 'Jan 11, 2026',
-    plan: 'Comprehensive',
-    industryAddOn: true,
-    province: 'Ontario',
-    naics: '31',
-    status: 'delivered',
-  },
-  {
-    id: 'OHS-2025-000456',
-    date: 'Dec 28, 2025',
-    plan: 'Basic',
-    industryAddOn: false,
-    province: 'Ontario',
-    naics: '54',
-    status: 'delivered',
-  },
-];
 
 export const howItWorksSteps = [
   {

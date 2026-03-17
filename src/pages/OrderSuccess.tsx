@@ -261,7 +261,7 @@ const OrderSuccess = () => {
                   )}
                 </Button>
                 <Button asChild className="flex-1">
-                  <Link to="/app/orders">
+                  <Link to="/dashboard/orders">
                     View My Orders
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>

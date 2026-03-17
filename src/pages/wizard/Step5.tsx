@@ -62,7 +62,7 @@ const Step5 = () => {
               <p className="text-wizard-text font-medium">{selectedPlan?.name} Package</p>
               <p className="text-wizard-text-muted text-sm">Health & Safety Manual</p>
             </div>
-            <p className="text-wizard-text font-medium">${selectedPlan?.price}.00 CAD</p>
+            <p className="text-wizard-text font-medium">${Number(selectedPlan?.price ?? 0).toFixed(2)} CAD</p>
           </div>
           {hasIndustryAddOn && (
             <div className="flex items-center justify-between">
@@ -77,7 +77,7 @@ const Step5 = () => {
         <div className="flex items-center justify-between py-4">
           <p className="text-wizard-text font-medium text-lg">Total Due</p>
           <p className="font-heading text-3xl text-wizard-text">
-            ${totalPrice}.00 <span className="text-base text-wizard-text-muted">CAD</span>
+            ${totalPrice.toFixed(2)} <span className="text-base text-wizard-text-muted">CAD</span>
           </p>
         </div>
       </motion.div>
@@ -114,7 +114,7 @@ const Step5 = () => {
               Redirecting to Stripe...
             </>
           ) : (
-            <>Pay ${totalPrice}.00 CAD</>
+            <>Pay ${totalPrice.toFixed(2)} CAD</>
           )}
         </Button>
 
