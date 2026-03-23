@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 interface Plan {
   plan_id: number;
@@ -109,19 +109,26 @@ interface StripeConfigResponse {
 }
 
 class ApiError extends Error {
-  constructor(public status: number, message: string, public details?: any) {
+  public status: number;
+  public details?: unknown;
+
+  constructor(status: number, message: string, details?: unknown) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
+    this.status = status;
+    this.details = details;
   }
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: { message: 'Request failed' } }));
+    const error = await response
+      .json()
+      .catch(() => ({ error: { message: "Request failed" } }));
     throw new ApiError(
       response.status,
-      error.error?.message || 'Request failed',
-      error.error?.details
+      error.error?.message || "Request failed",
+      error.error?.details,
     );
   }
   return response.json();
@@ -135,67 +142,74 @@ export const api = {
 
   async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
     const response = await fetch(`${API_BASE_URL}/orders`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     });
     return handleResponse<CreateOrderResponse>(response);
   },
   async requestOtp(email: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/auth/request-otp`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email }),
-  });
+    const response = await fetch(`${API_BASE_URL}/auth/request-otp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
 
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ error: { message: 'Request failed' } }));
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ error: { message: "Request failed" } }));
 
-    throw new ApiError(
-      response.status,
-      error.error?.message || 'Request failed',
-      error.error?.details
-    );
-  }
+      throw new ApiError(
+        response.status,
+        error.error?.message || "Request failed",
+        error.error?.details,
+      );
+    }
   },
 
-  
   async updateCompanyDetails(
     orderId: number,
-    data: UpdateCompanyDetailsRequest
+    data: UpdateCompanyDetailsRequest,
   ): Promise<OrderSummary> {
     const formData = new FormData();
-    formData.append('company_name', data.company_name);
-    formData.append('province', data.province);
-    formData.append('naics_codes', data.naics_codes);
+    formData.append("company_name", data.company_name);
+    formData.append("province", data.province);
+    formData.append("naics_codes", data.naics_codes);
     if (data.logo) {
-      formData.append('logo', data.logo);
+      formData.append("logo", data.logo);
     }
 
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/company-details`, {
-      method: 'PATCH',
-      body: formData,
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/orders/${orderId}/company-details`,
+      {
+        method: "PATCH",
+        body: formData,
+      },
+    );
     return handleResponse<OrderSummary>(response);
   },
 
   async generatePreview(orderId: number): Promise<GeneratePreviewResponse> {
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/generate-preview`, {
-      method: 'POST',
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/orders/${orderId}/generate-preview`,
+      {
+        method: "POST",
+      },
+    );
     return handleResponse<GeneratePreviewResponse>(response);
   },
 
   async downloadPreview(documentId: number): Promise<Blob> {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/preview`);
+    const response = await fetch(
+      `${API_BASE_URL}/documents/${documentId}/preview`,
+    );
     if (!response.ok) {
-      throw new ApiError(response.status, 'Failed to download preview');
+      throw new ApiError(response.status, "Failed to download preview");
     }
     return response.blob();
   },
@@ -205,22 +219,25 @@ export const api = {
     return handleResponse<DocumentDetails>(response);
   },
 
-  async downloadFinalDocument(documentId: number, token: string): Promise<Blob> {
+  async downloadFinalDocument(
+    documentId: number,
+    token: string,
+  ): Promise<Blob> {
     const response = await fetch(
-      `${API_BASE_URL}/documents/${documentId}/download?token=${token}`
+      `${API_BASE_URL}/documents/${documentId}/download?token=${token}`,
     );
     if (!response.ok) {
-      throw new ApiError(response.status, 'Failed to download document');
+      throw new ApiError(response.status, "Failed to download document");
     }
     return response.blob();
   },
 
   async downloadOrderDocument(orderId: number, token: string): Promise<Blob> {
     const response = await fetch(
-      `${API_BASE_URL}/orders/${orderId}/download?token=${token}`
+      `${API_BASE_URL}/orders/${orderId}/download?token=${token}`,
     );
     if (!response.ok) {
-      throw new ApiError(response.status, 'Failed to download document');
+      throw new ApiError(response.status, "Failed to download document");
     }
     return response.blob();
   },
@@ -230,21 +247,32 @@ export const api = {
     return handleResponse<OrderSummary>(response);
   },
 
-  async acceptLegalTerms(orderId: number, data: LegalAcknowledgmentRequest): Promise<LegalAcknowledgmentResponse> {
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/acknowledge-terms`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  async acceptLegalTerms(
+    orderId: number,
+    data: LegalAcknowledgmentRequest,
+  ): Promise<LegalAcknowledgmentResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/orders/${orderId}/acknowledge-terms`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       },
-      body: JSON.stringify(data),
-    });
+    );
     return handleResponse<LegalAcknowledgmentResponse>(response);
   },
 
-  async createCheckoutSession(orderId: number): Promise<CreateCheckoutSessionResponse> {
-    const response = await fetch(`${API_BASE_URL}/payments/orders/${orderId}/create-checkout-session`, {
-      method: 'POST',
-    });
+  async createCheckoutSession(
+    orderId: number,
+  ): Promise<CreateCheckoutSessionResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/payments/orders/${orderId}/create-checkout-session`,
+      {
+        method: "POST",
+      },
+    );
     return handleResponse<CreateCheckoutSessionResponse>(response);
   },
 

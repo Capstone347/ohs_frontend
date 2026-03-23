@@ -1,12 +1,16 @@
-import { requestOtp } from '@/services/auth';
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Mail, ArrowRight, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { toast } from 'sonner';
-import { api } from '@/services/api';
+import { requestOtp } from "@/services/auth";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Mail, ArrowRight, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { toast } from "sonner";
+import { api } from "@/services/api";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -17,9 +21,9 @@ const normalizeEmail = (value: string) => value.trim().toLowerCase();
 const Login = () => {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [codeSent, setCodeSent] = useState(false);
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
@@ -49,7 +53,7 @@ const Login = () => {
   };
 
   const requestOtp = async (emailToSend: string) => {
-    await requestOtp(emailToSend);;
+    await requestOtp(emailToSend);
   };
 
   const handleSendCode = async (e: React.FormEvent) => {
@@ -57,7 +61,7 @@ const Login = () => {
     setEmailTouched(true);
 
     if (!isValidEmail) {
-      toast.error('Please enter a valid email address');
+      toast.error("Please enter a valid email address");
       return;
     }
 
@@ -98,7 +102,7 @@ const Login = () => {
     e.preventDefault();
 
     if (otp.length !== 6) {
-      toast.error('Please enter the complete 6-digit code');
+      toast.error("Please enter the complete 6-digit code");
       return;
     }
 
@@ -107,10 +111,10 @@ const Login = () => {
     try {
       // Replace with actual OTP verification endpoint later
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('Welcome back!');
-      navigate('/app/orders');
+      toast.success("Welcome back!");
+      navigate("/app/orders");
     } catch {
-      toast.error('Unable to verify code. Please try again.');
+      toast.error("Unable to verify code. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +122,7 @@ const Login = () => {
 
   const handleUseDifferentEmail = () => {
     setCodeSent(false);
-    setOtp('');
+    setOtp("");
     setRequestedAt(null);
     setSecondsLeft(0);
   };
@@ -128,7 +132,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 p-8">
           <Link to="/" className="block text-center mb-8">
-            <span className="font-heading text-2xl text-text-dark">OHS Remote</span>
+            <span className="font-heading text-2xl text-text-dark">
+              OHS Remote
+            </span>
           </Link>
 
           <div className="text-center mb-8">
@@ -137,15 +143,18 @@ const Login = () => {
             </h1>
             <p className="text-text-dark-muted">
               {codeSent
-                ? 'Enter the code we sent to your email'
-                : 'Enter your email to receive a one-time login code'}
+                ? "Enter the code we sent to your email"
+                : "Enter your email to receive a one-time login code"}
             </p>
           </div>
 
           {!codeSent ? (
             <form onSubmit={handleSendCode} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-text-dark mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-text-dark mb-2"
+                >
                   Email Address
                 </label>
 
@@ -186,25 +195,37 @@ const Login = () => {
             </form>
           ) : (
             <form onSubmit={handleVerify} className="space-y-6">
-              <div className="rounded-xl bg-muted/40 border border-border-light p-4 text-sm text-text-dark">
-                <p className="font-medium mb-1">Code sent</p>
-                <p className="text-text-dark-muted break-all">{normalizedEmail}</p>
-                <p className="mt-2 text-text-dark-muted">{GENERIC_OTP_MESSAGE}</p>
+              {/* Info box */}
+              <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-4 text-sm text-zinc-100">
+                <p className="font-medium mb-1 text-zinc-200">Code sent</p>
+                <p className="text-zinc-400 break-all">{normalizedEmail}</p>
+                <p className="mt-2 text-zinc-400">{GENERIC_OTP_MESSAGE}</p>
               </div>
 
+              {/* OTP input */}
               <div className="flex justify-center">
                 <InputOTP
                   maxLength={6}
                   value={otp}
-                  onChange={(value) => setOtp(value.replace(/\D/g, ''))}
+                  onChange={(value) => setOtp(value.replace(/\D/g, ""))}
                 >
                   <InputOTPGroup>
-                    <InputOTPSlot index={0} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={1} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={2} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={3} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={4} className="w-12 h-14 text-lg" />
-                    <InputOTPSlot index={5} className="w-12 h-14 text-lg" />
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot
+                        key={i}
+                        index={i}
+                        className="
+              w-12 h-14 text-lg
+              bg-zinc-900
+              border border-zinc-700
+              text-white
+              rounded-md
+              focus:border-blue-500
+              focus:ring-2 focus:ring-blue-500/30
+              transition
+            "
+                      />
+                    ))}
                   </InputOTPGroup>
                 </InputOTP>
               </div>
@@ -236,7 +257,7 @@ const Login = () => {
                     disabled={!canResend}
                     className="text-sm text-primary hover:underline disabled:opacity-50"
                   >
-                    {isResending ? 'Resending...' : 'Resend code'}
+                    {isResending ? "Resending..." : "Resend code"}
                   </button>
                 )}
               </div>
@@ -253,8 +274,11 @@ const Login = () => {
 
           <div className="mt-8 pt-6 border-t border-border-light text-center">
             <p className="text-text-dark-muted text-sm">
-              Don't have an order yet?{' '}
-              <Link to="/app/step-1" className="text-primary hover:underline font-medium">
+              Don't have an order yet?{" "}
+              <Link
+                to="/app/step-1"
+                className="text-primary hover:underline font-medium"
+              >
                 Start Now
               </Link>
             </p>
