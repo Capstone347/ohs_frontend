@@ -1,4 +1,4 @@
-import { requestOtp } from "@/services/auth";
+import { requestOtp as requestOtpApi } from "@/services/auth";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, ArrowRight, Loader2 } from "lucide-react";
@@ -10,7 +10,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { toast } from "sonner";
-import { api } from "@/services/api";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -52,10 +51,6 @@ const Login = () => {
     setSecondsLeft(RESEND_COOLDOWN_SECONDS);
   };
 
-  const requestOtp = async (emailToSend: string) => {
-    await requestOtp(emailToSend);
-  };
-
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailTouched(true);
@@ -68,7 +63,8 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      await requestOtp(normalizedEmail);
+      console.log("Sending OTP to:", normalizedEmail);
+      await requestOtpApi(normalizedEmail);
     } catch {
       // Intentionally ignore specific backend failure details
       // to avoid revealing whether an email exists.
@@ -87,7 +83,8 @@ const Login = () => {
     setIsResending(true);
 
     try {
-      await requestOtp(normalizedEmail);
+      console.log("Resending OTP to:", normalizedEmail);
+      await requestOtpApi(normalizedEmail);
     } catch {
       // Keep same UX and message regardless of backend response
     } finally {
@@ -195,14 +192,12 @@ const Login = () => {
             </form>
           ) : (
             <form onSubmit={handleVerify} className="space-y-6">
-              {/* Info box */}
               <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-4 text-sm text-zinc-100">
                 <p className="font-medium mb-1 text-zinc-200">Code sent</p>
                 <p className="text-zinc-400 break-all">{normalizedEmail}</p>
                 <p className="mt-2 text-zinc-400">{GENERIC_OTP_MESSAGE}</p>
               </div>
 
-              {/* OTP input */}
               <div className="flex justify-center">
                 <InputOTP
                   maxLength={6}
@@ -215,15 +210,15 @@ const Login = () => {
                         key={i}
                         index={i}
                         className="
-              w-12 h-14 text-lg
-              bg-zinc-900
-              border border-zinc-700
-              text-white
-              rounded-md
-              focus:border-blue-500
-              focus:ring-2 focus:ring-blue-500/30
-              transition
-            "
+                          w-12 h-14 text-lg
+                          bg-zinc-900
+                          border border-zinc-700
+                          text-white
+                          rounded-md
+                          focus:border-blue-500
+                          focus:ring-2 focus:ring-blue-500/30
+                          transition
+                        "
                       />
                     ))}
                   </InputOTPGroup>
