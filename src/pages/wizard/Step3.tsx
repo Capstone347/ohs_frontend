@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from '@/context/WizardContext';
 import { provinces, getTOCForPlan } from '@/data/mockData';
-import { Loader2, FileText, Shield, BookOpen, CheckCircle2, Download } from 'lucide-react';
+import { Loader2, FileText, Shield, Info, BookOpen, CheckCircle2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,6 +24,7 @@ const Step3 = () => {
     hasIndustryAddOn,
     province,
     naicsCode,
+    businessDescription,
     companyName,
     logoFile,
     tocGenerated,
@@ -31,6 +32,7 @@ const Step3 = () => {
     documentId,
     setProvince,
     setNaicsCode,
+    setBusinessDescription,
     setTocGenerated,
     setDocumentId,
   } = useWizard();
@@ -193,6 +195,35 @@ const Step3 = () => {
               </p>
             )}
           </div>
+        </div>
+        
+        {/* Business Description Input */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <label
+              htmlFor="businessDescription"
+              className="block text-sm font-medium text-wizard-text"
+            >
+              Business Description
+              <span className="text-wizard-text-muted font-normal"> (Optional)</span>
+            </label>
+
+            <div className="group relative inline-flex">
+              <Info className="w-4 h-4 text-wizard-text-muted cursor-help" />
+              <div className="absolute left-0 top-6 z-20 hidden w-80 rounded-lg border border-wizard-border bg-white p-3 text-xs text-wizard-text-muted shadow-lg group-hover:block">
+                Include what your business does, the main products/services, who you serve, and the problem you solve. Add location or differentiators if relevant.
+              </div>
+            </div>
+          </div>
+
+          <textarea
+            id="businessDescription"
+            rows={4}
+            placeholder="Example: We provide residential HVAC installation and maintenance for homeowners in Ontario, specializing in energy-efficient retrofits."
+            value={businessDescription || ''}
+            onChange={(e) => setBusinessDescription(e.target.value)}
+            className="w-full rounded-md border border-wizard-border bg-white px-3 py-3 text-sm text-wizard-text placeholder:text-wizard-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
         </div>
 
         <Button

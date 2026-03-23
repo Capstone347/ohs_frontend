@@ -1,3 +1,7 @@
+<<<<<<< 8-auth-ui-email-login-request-otp-resend-ux
+=======
+// import { Toaster } from "@/components/ui/toaster";
+>>>>>>> main
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -27,6 +31,10 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <WizardProvider>
+<<<<<<< 8-auth-ui-email-login-request-otp-resend-ux
+=======
+        {/* <Toaster /> */}
+>>>>>>> main
         <Sonner position="bottom-right" />
         <BrowserRouter>
           <Routes>
@@ -45,6 +53,10 @@ const App = () => (
             <Route path="/app/success" element={<Success />} />
             <Route path="/app/orders" element={<Orders />} />
 
+<<<<<<< 8-auth-ui-email-login-request-otp-resend-ux
+=======
+            
+>>>>>>> main
             {/* Stripe redirect routes */}
             <Route path="/orders/:orderId/payment" element={<OrderPayment />} />
             <Route path="/orders/:orderId/success" element={<OrderSuccess />} />
