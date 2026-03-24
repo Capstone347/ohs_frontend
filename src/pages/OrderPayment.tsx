@@ -143,7 +143,7 @@ const OrderPayment = () => {
             <div className="flex items-center justify-between py-3">
               <span className="text-wizard-text-muted text-lg">Total Due</span>
               <span className="font-heading text-3xl text-wizard-text">
-                ${orderSummary.plan.price}.00{' '}
+                ${Number(orderSummary.plan.price).toFixed(2)}{' '}
                 <span className="text-base text-wizard-text-muted">CAD</span>
               </span>
             </div>
@@ -182,7 +182,7 @@ const OrderPayment = () => {
                 Redirecting to Stripe...
               </>
             ) : (
-              <>Pay ${orderSummary.plan.price}.00 CAD</>
+              <>Pay ${Number(orderSummary.plan.price).toFixed(2)} CAD</>
             )}
           </Button>
 

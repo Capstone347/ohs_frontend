@@ -135,7 +135,7 @@ export const WizardShell = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-wizard-text font-medium">Total</span>
                     <span className="font-heading text-2xl text-wizard-text">
-                      {selectedPlan ? `$${getTotalPrice()}.00 CAD` : '—'}
+                      {selectedPlan ? `$${getTotalPrice().toFixed(2)} CAD` : '—'}
                     </span>
                   </div>
                 </div>

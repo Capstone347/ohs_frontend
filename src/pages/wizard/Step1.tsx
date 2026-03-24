@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { api } from "@/services/api";
+import { api, ApiError } from "@/services/api";
 import { toast } from "sonner";
+import { provinceNameToCode } from "@/lib/provinceMapping";
 
 const Step1 = () => {
   const navigate = useNavigate();
@@ -21,13 +22,17 @@ const Step1 = () => {
     getTotalPrice,
     userEmail,
     fullName,
+    province,
+    orderId,
     setUserEmail,
     setFullName,
+    setOrderId,
     apiPlans,
     setApiPlans,
   } = useWizard();
 
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [nameError, setNameError] = useState("");
 
@@ -82,7 +87,7 @@ const Step1 = () => {
     return true;
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedPlan) {
       toast.error("Please select a plan");
       return;
@@ -96,10 +101,57 @@ const Step1 = () => {
       return;
     }
 
-    navigate("/app/step-2");
+    // If order already created (user navigated back), just continue
+    if (orderId) {
+      navigate("/app/step-2");
+      return;
+    }
+
+    // Find the API plan id (number) for the selected plan
+    const apiPlan = apiPlans.find(
+      (p) => p.slug === selectedPlan.id || p.name.toLowerCase() === selectedPlan.name.toLowerCase()
+    );
+    const planId = apiPlan?.id;
+
+    if (!planId) {
+      toast.error("Could not determine plan. Please try again.");
+      return;
+    }
+
+    setIsCreatingOrder(true);
+    try {
+      const response = await api.createOrder({
+        plan_id: planId,
+        user_email: userEmail,
+        full_name: fullName,
+        jurisdiction: provinceNameToCode(province),
+      });
+      setOrderId(response.order_id);
+      navigate("/app/step-2");
+    } catch (error) {
+      console.error("Failed to create order:", error);
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to create order. Please try again.");
+      }
+    } finally {
+      setIsCreatingOrder(false);
+    }
   };
 
-  const displayPlans = apiPlans && apiPlans.length > 0 ? apiPlans : plans;
+  const displayPlans = apiPlans && apiPlans.length > 0
+    ? apiPlans.map((ap) => {
+        const mockMatch = plans.find((p) => p.id === ap.slug || p.name.toLowerCase() === ap.name.toLowerCase());
+        return {
+          id: ap.slug as 'basic' | 'comprehensive',
+          name: ap.name,
+          price: parseFloat(ap.base_price) || 0,
+          suitable: ap.description,
+          features: mockMatch?.features ?? [],
+        };
+      })
+    : plans;
 
   return (
     <div className="space-y-8">
@@ -226,7 +278,7 @@ const Step1 = () => {
 
                   <div className="text-right flex-shrink-0">
                     <span className="font-heading text-3xl text-wizard-text">
-                      ${plan.price}
+                      ${plan.price.toFixed(2)}
                     </span>
                     <span className="text-wizard-text-muted text-sm block">
                       CAD
@@ -334,7 +386,7 @@ const Step1 = () => {
             <div className="text-right">
               <p className="text-text-muted text-sm">Total</p>
               <p className="font-heading text-3xl text-text-light">
-                ${getTotalPrice()}{" "}
+                ${getTotalPrice().toFixed(2)}{" "}
                 <span className="text-sm text-text-muted">CAD</span>
               </p>
             </div>
@@ -345,11 +397,18 @@ const Step1 = () => {
       <div className="flex justify-end pt-4">
         <Button
           onClick={handleContinue}
-          disabled={!userEmail || !fullName || !selectedPlan}
+          disabled={!userEmail || !fullName || !selectedPlan || isCreatingOrder}
           size="lg"
           className="px-8"
         >
-          Continue
+          {isCreatingOrder ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating Order...
+            </>
+          ) : (
+            'Continue'
+          )}
         </Button>
       </div>
     </div>
