@@ -148,7 +148,7 @@ const Step1 = () => {
     }
   };
 
-  const displayPlans =
+  const mappedApiPlans =
     apiPlans && apiPlans.length > 0
       ? apiPlans.map((ap) => {
           const mockMatch = plans.find(
@@ -170,7 +170,22 @@ const Step1 = () => {
             features: mockMatch?.features ?? [],
           };
         })
+      : [];
+
+  const mergedPlans =
+    mappedApiPlans.length > 0
+      ? [
+          ...mappedApiPlans,
+          ...plans.filter(
+            (mockPlan) =>
+              !mappedApiPlans.some((apiPlan) => apiPlan.id === mockPlan.id),
+          ),
+        ]
       : plans;
+
+  const displayPlans = ["basic", "comprehensive", "sjp_only"]
+    .map((id) => mergedPlans.find((p) => p.id === id))
+    .filter(Boolean) as typeof plans;
 
   const isSjpOnlySelected = selectedPlan?.id === "sjp_only";
 
