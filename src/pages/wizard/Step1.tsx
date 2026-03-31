@@ -87,6 +87,14 @@ const Step1 = () => {
     return true;
   };
 
+  const handlePlanSelect = (plan: (typeof plans)[number]) => {
+    setSelectedPlan(plan);
+
+    if (plan.id === "sjp_only") {
+      setHasIndustryAddOn(true);
+    }
+  };
+
   const handleContinue = async () => {
     if (!selectedPlan) {
       toast.error("Please select a plan");
@@ -101,15 +109,15 @@ const Step1 = () => {
       return;
     }
 
-    // If order already created (user navigated back), just continue
     if (orderId) {
       navigate("/app/step-2");
       return;
     }
 
-    // Find the API plan id (number) for the selected plan
     const apiPlan = apiPlans.find(
-      (p) => p.slug === selectedPlan.id || p.name.toLowerCase() === selectedPlan.name.toLowerCase()
+      (p) =>
+        p.slug === selectedPlan.id ||
+        p.name.toLowerCase() === selectedPlan.name.toLowerCase(),
     );
     const planId = apiPlan?.id;
 
@@ -140,24 +148,37 @@ const Step1 = () => {
     }
   };
 
-  const displayPlans = apiPlans && apiPlans.length > 0
-    ? apiPlans.map((ap) => {
-        const mockMatch = plans.find((p) => p.id === ap.slug || p.name.toLowerCase() === ap.name.toLowerCase());
-        return {
-          id: ap.slug as 'basic' | 'comprehensive',
-          name: ap.name,
-          price: parseFloat(ap.base_price) || 0,
-          suitable: ap.description,
-          features: mockMatch?.features ?? [],
-        };
-      })
-    : plans;
+  const displayPlans =
+    apiPlans && apiPlans.length > 0
+      ? apiPlans.map((ap) => {
+          const mockMatch = plans.find(
+            (p) =>
+              p.id === ap.slug ||
+              p.name.toLowerCase() === ap.name.toLowerCase(),
+          );
+
+          const fallbackSuitable =
+            ap.slug === "sjp_only"
+              ? "Businesses needing industry-specific safe job procedures only"
+              : ap.description;
+
+          return {
+            id: ap.slug as "basic" | "comprehensive" | "sjp_only",
+            name: ap.name,
+            price: parseFloat(ap.base_price) || 0,
+            suitable: mockMatch?.suitable ?? fallbackSuitable,
+            features: mockMatch?.features ?? [],
+          };
+        })
+      : plans;
+
+  const isSjpOnlySelected = selectedPlan?.id === "sjp_only";
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-heading text-3xl text-wizard-text mb-2">
-          Select Your H&S Program
+          Select Your H&amp;S Program
         </h1>
         <p className="text-wizard-text-muted text-lg">
           Choose the package that best fits your business needs.
@@ -240,7 +261,7 @@ const Step1 = () => {
             >
               <button
                 type="button"
-                onClick={() => setSelectedPlan(plan)}
+                onClick={() => handlePlanSelect(plan)}
                 className={cn(
                   "plan-card w-full text-left",
                   selectedPlan?.id === plan.id && "plan-card-selected",
@@ -291,7 +312,7 @@ const Step1 = () => {
         )}
       </div>
 
-      {selectedPlan && (
+      {selectedPlan && !isSjpOnlySelected && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -368,6 +389,26 @@ const Step1 = () => {
         </motion.div>
       )}
 
+      {selectedPlan && isSjpOnlySelected && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="rounded-xl border border-primary/20 bg-primary/5 p-6"
+        >
+          <p className="text-sm font-medium text-wizard-text-muted uppercase tracking-wide mb-2">
+            Included with SJP Only
+          </p>
+          <h3 className="font-heading text-xl text-wizard-text mb-2">
+            Industry-Specific Content Included
+          </h3>
+          <p className="text-wizard-text-muted text-sm">
+            The SJP Only package already includes industry-specific safe job
+            procedures, so no separate industry add-on is needed.
+          </p>
+        </motion.div>
+      )}
+
       {selectedPlan && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -379,7 +420,11 @@ const Step1 = () => {
               <p className="text-text-muted text-sm">Your Selection</p>
               <p className="text-text-light font-medium">
                 {selectedPlan.name}
-                {hasIndustryAddOn && " + Industry-Specific Add-On"}
+                {selectedPlan.id === "sjp_only"
+                  ? " (Industry-Specific SJPs Included)"
+                  : hasIndustryAddOn
+                    ? " + Industry-Specific Add-On"
+                    : ""}
               </p>
             </div>
 
@@ -407,7 +452,7 @@ const Step1 = () => {
               Creating Order...
             </>
           ) : (
-            'Continue'
+            "Continue"
           )}
         </Button>
       </div>

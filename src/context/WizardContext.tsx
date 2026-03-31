@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Plan as MockPlan, plans, industryAddOn } from '@/data/mockData';
-import { Plan as ApiPlan } from '@/services/api';
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { Plan as MockPlan, industryAddOn } from "@/data/mockData";
+import { Plan as ApiPlan } from "@/services/api";
 
 interface WizardState {
   selectedPlan: MockPlan | null;
@@ -29,7 +29,7 @@ interface WizardContextType extends WizardState {
   setLogoPreview: (preview: string | null) => void;
   setProvince: (province: string) => void;
   setNaicsCode: (code: string) => void;
-    setBusinessDescription: (description: string) => void;
+  setBusinessDescription: (description: string) => void;
   setCompanyName: (name: string) => void;
   setUserEmail: (email: string) => void;
   setFullName: (name: string) => void;
@@ -41,6 +41,8 @@ interface WizardContextType extends WizardState {
   setApiPlans: (plans: ApiPlan[]) => void;
   resetWizard: () => void;
   getTotalPrice: () => number;
+  isSjpOnlyPlan: () => boolean;
+  isLogoOptional: () => boolean;
 }
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -50,34 +52,47 @@ const initialState: WizardState = {
   hasIndustryAddOn: false,
   logoFile: null,
   logoPreview: null,
-  province: 'Ontario',
-  naicsCode: '',
-  businessDescription: '',
-  companyName: '',
-  userEmail: '',
-  fullName: '',
+  province: "Ontario",
+  naicsCode: "",
+  businessDescription: "",
+  companyName: "",
+  userEmail: "",
+  fullName: "",
   tocGenerated: false,
   disclaimerAccepted: false,
-  signatureName: '',
-  signatureDate: new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  signatureName: "",
+  signatureDate: new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   }),
   orderId: null,
   documentId: null,
   apiPlans: [],
 };
 
-export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const WizardProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [state, setState] = useState<WizardState>(initialState);
 
   const setSelectedPlan = (plan: MockPlan | null) => {
-    setState((prev) => ({ ...prev, selectedPlan: plan }));
+    setState((prev) => {
+      const isSjpOnly = plan?.id === "sjp_only";
+
+      return {
+        ...prev,
+        selectedPlan: plan,
+        hasIndustryAddOn: isSjpOnly ? true : prev.hasIndustryAddOn,
+      };
+    });
   };
 
   const setHasIndustryAddOn = (hasAddOn: boolean) => {
-    setState((prev) => ({ ...prev, hasIndustryAddOn: hasAddOn }));
+    setState((prev) => ({
+      ...prev,
+      hasIndustryAddOn: prev.selectedPlan?.id === "sjp_only" ? true : hasAddOn,
+    }));
   };
 
   const setLogoFile = (file: File | null) => {
@@ -95,9 +110,11 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const setNaicsCode = (code: string) => {
     setState((prev) => ({ ...prev, naicsCode: code }));
   };
+
   const setBusinessDescription = (description: string) => {
     setState((prev) => ({ ...prev, businessDescription: description }));
   };
+
   const setCompanyName = (name: string) => {
     setState((prev) => ({ ...prev, companyName: name }));
   };
@@ -138,8 +155,18 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setState(initialState);
   };
 
+  const isSjpOnlyPlan = () => state.selectedPlan?.id === "sjp_only";
+
+  const isLogoOptional = () => isSjpOnlyPlan();
+
   const getTotalPrice = () => {
-    let total = state.selectedPlan?.price || 0;
+    const basePrice = state.selectedPlan?.price || 0;
+
+    if (state.selectedPlan?.id === "sjp_only") {
+      return basePrice;
+    }
+
+    let total = basePrice;
     if (state.hasIndustryAddOn) {
       total += industryAddOn.price;
     }
@@ -168,6 +195,8 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setApiPlans,
         resetWizard,
         getTotalPrice,
+        isSjpOnlyPlan,
+        isLogoOptional,
       }}
     >
       {children}
@@ -178,7 +207,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 export const useWizard = (): WizardContextType => {
   const context = useContext(WizardContext);
   if (!context) {
-    throw new Error('useWizard must be used within a WizardProvider');
+    throw new Error("useWizard must be used within a WizardProvider");
   }
   return context;
 };
