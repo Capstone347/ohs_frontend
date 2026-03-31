@@ -1,24 +1,27 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useWizard } from '@/context/WizardContext';
-import { CreditCard, Lock, Loader2, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
-import { toast } from 'sonner';
-import { api, ApiError } from '@/services/api';
-import PaymentMethodBadges from '@/components/PaymentMethodBadges';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useWizard } from "@/context/WizardContext";
+import { CreditCard, Lock, Loader2, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { api, ApiError } from "@/services/api";
+import PaymentMethodBadges from "@/components/PaymentMethodBadges";
+import { industryAddOn } from "@/data/mockData";
 
 const Step5 = () => {
   const navigate = useNavigate();
-  const { selectedPlan, hasIndustryAddOn, getTotalPrice, orderId } = useWizard();
+  const { selectedPlan, hasIndustryAddOn, getTotalPrice, orderId } =
+    useWizard();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const totalPrice = getTotalPrice();
+  const isSjpOnlySelected = selectedPlan?.id === "sjp_only";
 
   const handlePay = async () => {
     if (!orderId) {
-      toast.error('Order ID not found. Please start over.');
-      navigate('/app/step-1');
+      toast.error("Order ID not found. Please start over.");
+      navigate("/app/step-1");
       return;
     }
 
@@ -28,11 +31,11 @@ const Step5 = () => {
       const { checkout_url } = await api.createCheckoutSession(orderId);
       window.location.href = checkout_url;
     } catch (error) {
-      console.error('Failed to create checkout session:', error);
+      console.error("Failed to create checkout session:", error);
       if (error instanceof ApiError) {
         toast.error(error.message);
       } else {
-        toast.error('Failed to initiate payment. Please try again.');
+        toast.error("Failed to initiate payment. Please try again.");
       }
       setIsRedirecting(false);
     }
@@ -55,29 +58,61 @@ const Step5 = () => {
         transition={{ duration: 0.4 }}
         className="bg-white rounded-2xl border border-wizard-border shadow-lg shadow-black/5 p-8"
       >
-        <h3 className="font-heading text-xl text-wizard-text mb-4">Order Summary</h3>
+        <h3 className="font-heading text-xl text-wizard-text mb-4">
+          Order Summary
+        </h3>
+
         <div className="space-y-3 py-4 border-b border-wizard-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-wizard-text font-medium">{selectedPlan?.name} Package</p>
-              <p className="text-wizard-text-muted text-sm">Health & Safety Manual</p>
+              <p className="text-wizard-text font-medium">
+                {selectedPlan?.name} Package
+              </p>
+              <p className="text-wizard-text-muted text-sm">
+                {isSjpOnlySelected
+                  ? "Industry-specific safe job procedures"
+                  : "Health & Safety Manual"}
+              </p>
             </div>
-            <p className="text-wizard-text font-medium">${Number(selectedPlan?.price ?? 0).toFixed(2)} CAD</p>
+            <p className="text-wizard-text font-medium">
+              ${Number(selectedPlan?.price ?? 0).toFixed(2)} CAD
+            </p>
           </div>
-          {hasIndustryAddOn && (
+
+          {isSjpOnlySelected ? (
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-wizard-text font-medium">Industry-Specific Add-On</p>
-                <p className="text-wizard-text-muted text-sm">Enhanced compliance documentation</p>
+                <p className="text-wizard-text font-medium">
+                  Industry-Specific Content
+                </p>
+                <p className="text-wizard-text-muted text-sm">
+                  Included with SJP Only package
+                </p>
               </div>
-              <p className="text-wizard-text font-medium">$100.00 CAD</p>
+              <p className="text-wizard-text font-medium">Included</p>
             </div>
-          )}
+          ) : hasIndustryAddOn ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-wizard-text font-medium">
+                  Industry-Specific Add-On
+                </p>
+                <p className="text-wizard-text-muted text-sm">
+                  Enhanced compliance documentation
+                </p>
+              </div>
+              <p className="text-wizard-text font-medium">
+                ${industryAddOn.price.toFixed(2)} CAD
+              </p>
+            </div>
+          ) : null}
         </div>
+
         <div className="flex items-center justify-between py-4">
           <p className="text-wizard-text font-medium text-lg">Total Due</p>
           <p className="font-heading text-3xl text-wizard-text">
-            ${totalPrice.toFixed(2)} <span className="text-base text-wizard-text-muted">CAD</span>
+            ${totalPrice.toFixed(2)}{" "}
+            <span className="text-base text-wizard-text-muted">CAD</span>
           </p>
         </div>
       </motion.div>
@@ -94,12 +129,12 @@ const Step5 = () => {
         </div>
 
         <p className="text-wizard-text-muted mb-6">
-          You'll be redirected to Stripe's secure checkout to complete your payment.
-          No card details are collected on this site.
+          You'll be redirected to Stripe's secure checkout to complete your
+          payment. No card details are collected on this site.
         </p>
 
-<div className="mb-6">
-            <PaymentMethodBadges />
+        <div className="mb-6">
+          <PaymentMethodBadges />
         </div>
 
         <Button
@@ -130,7 +165,7 @@ const Step5 = () => {
       <div className="flex justify-start pt-4">
         <Button
           variant="outline"
-          onClick={() => navigate('/app/step-4')}
+          onClick={() => navigate("/app/step-4")}
           className="px-8"
         >
           Back
