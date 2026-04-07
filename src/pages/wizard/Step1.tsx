@@ -133,6 +133,7 @@ const Step1 = () => {
         user_email: userEmail,
         full_name: fullName,
         jurisdiction: provinceNameToCode(province),
+        is_industry_specific: hasIndustryAddOn,
       });
       setOrderId(response.order_id);
       navigate("/app/step-2");
