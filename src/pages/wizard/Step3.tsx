@@ -1,21 +1,21 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useWizard } from '@/context/WizardContext';
-import { provinces, getTOCForPlan } from '@/data/mockData';
-import { Loader2, FileText, Shield, Info, BookOpen, CheckCircle2, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useWizard } from "@/context/WizardContext";
+import { provinces, getTOCForPlan } from "@/data/mockData";
+import { Loader2, FileText, Shield, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { motion } from 'framer-motion';
-import { toast } from 'sonner';
-import { api, ApiError } from '@/services/api';
-import { provinceNameToCode } from '@/lib/provinceMapping';
+} from "@/components/ui/select";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { api, ApiError } from "@/services/api";
+import { provinceNameToCode } from "@/lib/provinceMapping";
 
 const Step3 = () => {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ const Step3 = () => {
     setDocumentId,
   } = useWizard();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
@@ -46,15 +46,15 @@ const Step3 = () => {
       const fetchPreview = async () => {
         setIsLoadingPreview(true);
         try {
-          console.log('Fetching preview for document:', documentId);
+          console.log("Fetching preview for document:", documentId);
           const blob = await api.downloadPreview(documentId);
-          console.log('Preview blob received:', blob.type, blob.size, 'bytes');
+          console.log("Preview blob received:", blob.type, blob.size, "bytes");
           const url = URL.createObjectURL(blob);
-          console.log('Blob URL created:', url);
+          console.log("Blob URL created:", url);
           setPreviewUrl(url);
         } catch (error) {
-          console.error('Failed to load preview:', error);
-          toast.error('Failed to load document preview');
+          console.error("Failed to load preview:", error);
+          toast.error("Failed to load document preview");
         } finally {
           setIsLoadingPreview(false);
         }
@@ -70,9 +70,9 @@ const Step3 = () => {
   }, [tocGenerated, documentId, previewUrl]);
 
   const validateNaicsCode = (code: string) => {
-    if (!code) return 'NAICS code is required';
-    if (!/^\d{2,6}$/.test(code)) return 'NAICS code must be 2-6 digits';
-    return '';
+    if (!code) return "NAICS code is required";
+    if (!/^\d{2,6}$/.test(code)) return "NAICS code must be 2-6 digits";
+    return "";
   };
 
   const handleGenerateTOC = async () => {
@@ -83,54 +83,59 @@ const Step3 = () => {
     }
 
     if (!orderId) {
-      toast.error('Order ID not found. Please start over.');
-      navigate('/app/step-1');
+      toast.error("Order ID not found. Please start over.");
+      navigate("/app/step-1");
       return;
     }
 
     if (!companyName) {
-      toast.error('Company name is required. Please go back to Step 2.');
-      navigate('/app/step-2');
+      toast.error("Company name is required. Please go back to Step 2.");
+      navigate("/app/step-2");
       return;
     }
 
-    setError('');
+    setError("");
     setIsGenerating(true);
-    
+
     try {
       const provinceCode = provinceNameToCode(province);
-      
+
       await api.updateCompanyDetails(orderId, {
         company_name: companyName,
         province: provinceCode,
         naics_codes: naicsCode,
         logo: logoFile || undefined,
+        business_description:
+          businessDescription && businessDescription.trim() !== ""
+            ? businessDescription
+            : undefined,
       });
 
       const response = await api.generatePreview(orderId);
       setDocumentId(response.document_id);
       setTocGenerated(true);
-      toast.success('Document preview generated!');
+      toast.success("Document preview generated!");
     } catch (error) {
-      console.error('Failed to generate preview:', error);
+      console.error("Failed to generate preview:", error);
       if (error instanceof ApiError) {
         toast.error(error.message);
       } else {
-        toast.error('Failed to generate preview. Please try again.');
+        toast.error("Failed to generate preview. Please try again.");
       }
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const tocItems = selectedPlan ? getTOCForPlan(selectedPlan.id, hasIndustryAddOn) : [];
+  const tocItems = selectedPlan
+    ? getTOCForPlan(selectedPlan.id, hasIndustryAddOn)
+    : [];
 
-  const planName = selectedPlan?.id === 'comprehensive' 
-    ? 'Comprehensive' 
-    : 'Basic';
-  
-  const fullPlanName = hasIndustryAddOn 
-    ? `${planName} + Industry-Specific` 
+  const planName =
+    selectedPlan?.id === "comprehensive" ? "Comprehensive" : "Basic";
+
+  const fullPlanName = hasIndustryAddOn
+    ? `${planName} + Industry-Specific`
     : planName;
 
   return (
@@ -151,7 +156,6 @@ const Step3 = () => {
         className="bg-white rounded-2xl border border-wizard-border shadow-lg shadow-black/5 p-8"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-          {/* Province Select */}
           <div>
             <label className="block text-sm font-medium text-wizard-text mb-2">
               Province
@@ -170,7 +174,6 @@ const Step3 = () => {
             </Select>
           </div>
 
-          {/* NAICS Code Input */}
           <div>
             <label className="block text-sm font-medium text-wizard-text mb-2">
               NAICS Industry Code
@@ -181,10 +184,10 @@ const Step3 = () => {
               value={naicsCode}
               onChange={(e) => {
                 setNaicsCode(e.target.value);
-                setError('');
+                setError("");
               }}
               className={`h-12 bg-white border-wizard-border text-wizard-text placeholder:text-wizard-text-muted ${
-                error ? 'border-error focus:border-error focus:ring-error' : ''
+                error ? "border-error focus:border-error focus:ring-error" : ""
               }`}
             />
             {error ? (
@@ -196,8 +199,7 @@ const Step3 = () => {
             )}
           </div>
         </div>
-        
-        {/* Business Description Input */}
+
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <label
@@ -205,13 +207,18 @@ const Step3 = () => {
               className="block text-sm font-medium text-wizard-text"
             >
               Business Description
-              <span className="text-wizard-text-muted font-normal"> (Optional)</span>
+              <span className="text-wizard-text-muted font-normal">
+                {" "}
+                (Optional)
+              </span>
             </label>
 
             <div className="group relative inline-flex">
               <Info className="w-4 h-4 text-wizard-text-muted cursor-help" />
               <div className="absolute left-0 top-6 z-20 hidden w-80 rounded-lg border border-wizard-border bg-white p-3 text-xs text-wizard-text-muted shadow-lg group-hover:block">
-                Include what your business does, the main products/services, who you serve, and the problem you solve. Add location or differentiators if relevant.
+                Include what your business does, the main products/services, who
+                you serve, and the problem you solve. Add location or
+                differentiators if relevant.
               </div>
             </div>
           </div>
@@ -220,7 +227,7 @@ const Step3 = () => {
             id="businessDescription"
             rows={4}
             placeholder="Example: We provide residential HVAC installation and maintenance for homeowners in Ontario, specializing in energy-efficient retrofits."
-            value={businessDescription || ''}
+            value={businessDescription || ""}
             onChange={(e) => setBusinessDescription(e.target.value)}
             className="w-full rounded-md border border-wizard-border bg-white px-3 py-3 text-sm text-wizard-text placeholder:text-wizard-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
@@ -246,7 +253,6 @@ const Step3 = () => {
         </Button>
       </motion.div>
 
-      {/* Document Preview Section */}
       {tocGenerated && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -257,10 +263,8 @@ const Step3 = () => {
           <h2 className="font-heading text-xl text-wizard-text mb-4">
             Your H&S Manual Preview
           </h2>
-          
-          {/* Document Preview Card */}
+
           <div className="relative bg-white rounded-2xl shadow-xl border border-wizard-border overflow-hidden">
-            {/* Document Header */}
             <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-6 md:px-8 py-6 border-b border-wizard-border">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -277,7 +281,6 @@ const Step3 = () => {
               </div>
             </div>
 
-            {/* PDF Preview with Gradient Blur */}
             <div className="relative">
               {isLoadingPreview ? (
                 <div className="flex items-center justify-center py-32">
@@ -298,14 +301,11 @@ const Step3 = () => {
                       />
                     </object>
                   </div>
-                  
-                  {/* Gradient Fade Overlay - Medium style */}
+
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-50% to-white pointer-events-none" />
-                  
-                  {/* Bottom blur section */}
+
                   <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-white via-white/95 to-transparent backdrop-blur-[1px] pointer-events-none" />
-                  
-                  {/* Call to Action at bottom */}
+
                   <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center justify-center pointer-events-none">
                     <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 md:px-8 py-4 border border-primary/20 shadow-2xl">
                       <p className="text-lg font-medium text-primary text-center mb-1">
@@ -316,18 +316,18 @@ const Step3 = () => {
                       </p>
                     </div>
                   </div>
-                  
-                  {/* Invisible overlay to prevent interaction */}
+
                   <div className="absolute inset-0" />
                 </>
               ) : (
                 <div className="flex items-center justify-center py-32">
-                  <p className="text-wizard-text-muted">Preview not available</p>
+                  <p className="text-wizard-text-muted">
+                    Preview not available
+                  </p>
                 </div>
               )}
             </div>
 
-            {/* Document Footer */}
             <div className="bg-wizard-bg/50 px-6 md:px-8 py-4 border-t border-wizard-border flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm text-wizard-text-muted">
                 <FileText className="w-4 h-4" />
@@ -344,13 +344,13 @@ const Step3 = () => {
       <div className="flex justify-between pt-4">
         <Button
           variant="outline"
-          onClick={() => navigate('/app/step-2')}
+          onClick={() => navigate("/app/step-2")}
           className="px-8"
         >
           Back
         </Button>
         <Button
-          onClick={() => navigate('/app/step-4')}
+          onClick={() => navigate("/app/step-4")}
           disabled={!tocGenerated}
           size="lg"
           className="px-8"

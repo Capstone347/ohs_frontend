@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 // --- Existing interfaces ---
 
@@ -19,6 +19,7 @@ interface CreateOrderRequest {
   user_email: string;
   full_name: string;
   jurisdiction: string;
+  is_industry_specific?: boolean;
 }
 
 interface CreateOrderResponse {
@@ -33,6 +34,7 @@ interface UpdateCompanyDetailsRequest {
   province: string;
   naics_codes: string;
   logo?: File;
+  business_description?: string;
 }
 
 interface OrderDocument {
@@ -136,7 +138,7 @@ interface OrdersListResponse {
 
 interface TimelineStep {
   step: string;
-  status: 'completed' | 'current' | 'pending';
+  status: "completed" | "current" | "pending";
   timestamp: string | null;
 }
 
@@ -176,22 +178,28 @@ interface OrdersQueryParams {
 // --- Error handling ---
 
 class ApiError extends Error {
-  constructor(public status: number, message: string, public details?: any) {
+  constructor(
+    public status: number,
+    message: string,
+    public details?: any,
+  ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     if (response.status === 401) {
-      window.dispatchEvent(new Event('auth:unauthorized'));
+      window.dispatchEvent(new Event("auth:unauthorized"));
     }
-    const error = await response.json().catch(() => ({ error: { message: 'Request failed' } }));
+    const error = await response
+      .json()
+      .catch(() => ({ error: { message: "Request failed" } }));
     throw new ApiError(
       response.status,
-      error.error?.message || error.detail || 'Request failed',
-      error.error?.details
+      error.error?.message || error.detail || "Request failed",
+      error.error?.details,
     );
   }
   return response.json();
@@ -200,7 +208,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   return fetch(url, {
     ...options,
-    credentials: 'include',
+    credentials: "include",
   });
 }
 
@@ -209,8 +217,8 @@ export const api = {
 
   async requestOtp(email: string): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/auth/request-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
     return handleResponse(response);
@@ -218,9 +226,9 @@ export const api = {
 
   async verifyOtp(email: string, otp: string): Promise<{ user: AuthUser }> {
     const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email, otp }),
     });
     return handleResponse(response);
@@ -233,7 +241,7 @@ export const api = {
 
   async logout(): Promise<{ message: string }> {
     const response = await authFetch(`${API_BASE_URL}/auth/logout`, {
-      method: 'POST',
+      method: "POST",
     });
     return handleResponse(response);
   },
@@ -242,13 +250,17 @@ export const api = {
 
   async getOrders(params: OrdersQueryParams = {}): Promise<OrdersListResponse> {
     const searchParams = new URLSearchParams();
-    if (params.query) searchParams.set('query', params.query);
-    if (params.order_status) searchParams.set('order_status', params.order_status);
-    if (params.page) searchParams.set('page', String(params.page));
-    if (params.page_size) searchParams.set('page_size', String(params.page_size));
+    if (params.query) searchParams.set("query", params.query);
+    if (params.order_status)
+      searchParams.set("order_status", params.order_status);
+    if (params.page) searchParams.set("page", String(params.page));
+    if (params.page_size)
+      searchParams.set("page_size", String(params.page_size));
 
     const qs = searchParams.toString();
-    const response = await authFetch(`${API_BASE_URL}/orders${qs ? `?${qs}` : ''}`);
+    const response = await authFetch(
+      `${API_BASE_URL}/orders${qs ? `?${qs}` : ""}`,
+    );
     return handleResponse<OrdersListResponse>(response);
   },
 
@@ -266,8 +278,8 @@ export const api = {
 
   async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
     const response = await fetch(`${API_BASE_URL}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return handleResponse<CreateOrderResponse>(response);
@@ -275,34 +287,47 @@ export const api = {
 
   async updateCompanyDetails(
     orderId: number,
-    data: UpdateCompanyDetailsRequest
+    data: UpdateCompanyDetailsRequest,
   ): Promise<OrderSummary> {
     const formData = new FormData();
-    formData.append('company_name', data.company_name);
-    formData.append('province', data.province);
-    formData.append('naics_codes', data.naics_codes);
+    formData.append("company_name", data.company_name);
+    formData.append("province", data.province);
+    formData.append("naics_codes", data.naics_codes);
+
     if (data.logo) {
-      formData.append('logo', data.logo);
+      formData.append("logo", data.logo);
     }
 
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/company-details`, {
-      method: 'PATCH',
-      body: formData,
-    });
+    if (data.business_description && data.business_description.trim() !== "") {
+      formData.append("business_description", data.business_description);
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/orders/${orderId}/company-details`,
+      {
+        method: "PATCH",
+        body: formData,
+      },
+    );
     return handleResponse<OrderSummary>(response);
   },
 
   async generatePreview(orderId: number): Promise<GeneratePreviewResponse> {
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/generate-preview`, {
-      method: 'POST',
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/orders/${orderId}/generate-preview`,
+      {
+        method: "POST",
+      },
+    );
     return handleResponse<GeneratePreviewResponse>(response);
   },
 
   async downloadPreview(documentId: number): Promise<Blob> {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/preview`);
+    const response = await fetch(
+      `${API_BASE_URL}/documents/${documentId}/preview`,
+    );
     if (!response.ok) {
-      throw new ApiError(response.status, 'Failed to download preview');
+      throw new ApiError(response.status, "Failed to download preview");
     }
     return response.blob();
   },
@@ -312,44 +337,60 @@ export const api = {
     return handleResponse<DocumentDetails>(response);
   },
 
-  async downloadFinalDocument(documentId: number, token: string): Promise<Blob> {
+  async downloadFinalDocument(
+    documentId: number,
+    token: string,
+  ): Promise<Blob> {
     const response = await fetch(
-      `${API_BASE_URL}/documents/${documentId}/download?token=${encodeURIComponent(token)}`
+      `${API_BASE_URL}/documents/${documentId}/download?token=${encodeURIComponent(token)}`,
     );
     if (!response.ok) {
-      throw new ApiError(response.status, 'Failed to download document');
+      throw new ApiError(response.status, "Failed to download document");
     }
     return response.blob();
   },
 
   async downloadOrderDocument(orderId: number, token: string): Promise<Blob> {
     const response = await authFetch(
-      `${API_BASE_URL}/orders/${orderId}/download?token=${encodeURIComponent(token)}`
+      `${API_BASE_URL}/orders/${orderId}/download?token=${encodeURIComponent(token)}`,
     );
     if (!response.ok) {
-      throw new ApiError(response.status, 'Failed to download document');
+      throw new ApiError(response.status, "Failed to download document");
     }
     return response.blob();
   },
 
   async getOrderSummary(orderId: number): Promise<OrderSummary> {
-    const response = await authFetch(`${API_BASE_URL}/orders/${orderId}/summary`);
+    const response = await authFetch(
+      `${API_BASE_URL}/orders/${orderId}/summary`,
+    );
     return handleResponse<OrderSummary>(response);
   },
 
-  async acceptLegalTerms(orderId: number, data: LegalAcknowledgmentRequest): Promise<LegalAcknowledgmentResponse> {
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/acknowledge-terms`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+  async acceptLegalTerms(
+    orderId: number,
+    data: LegalAcknowledgmentRequest,
+  ): Promise<LegalAcknowledgmentResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/orders/${orderId}/acknowledge-terms`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      },
+    );
     return handleResponse<LegalAcknowledgmentResponse>(response);
   },
 
-  async createCheckoutSession(orderId: number): Promise<CreateCheckoutSessionResponse> {
-    const response = await fetch(`${API_BASE_URL}/payments/orders/${orderId}/create-checkout-session`, {
-      method: 'POST',
-    });
+  async createCheckoutSession(
+    orderId: number,
+  ): Promise<CreateCheckoutSessionResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/payments/orders/${orderId}/create-checkout-session`,
+      {
+        method: "POST",
+      },
+    );
     return handleResponse<CreateCheckoutSessionResponse>(response);
   },
 
