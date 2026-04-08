@@ -32,7 +32,7 @@ interface CreateOrderResponse {
 interface UpdateCompanyDetailsRequest {
   company_name: string;
   province: string;
-  naics_codes: string;
+  naics_codes: string[];
   logo?: File;
   business_description?: string;
 }
@@ -292,7 +292,10 @@ export const api = {
     const formData = new FormData();
     formData.append("company_name", data.company_name);
     formData.append("province", data.province);
-    formData.append("naics_codes", data.naics_codes);
+
+    data.naics_codes.forEach((code) => {
+      formData.append("naics_codes", code);
+    });
 
     if (data.logo) {
       formData.append("logo", data.logo);
