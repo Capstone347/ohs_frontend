@@ -8,7 +8,7 @@ interface WizardState {
   logoFile: File | null;
   logoPreview: string | null;
   province: string;
-  naicsCode: string;
+  naicsCodes: string[];
   businessDescription: string;
   companyName: string;
   userEmail: string;
@@ -28,7 +28,7 @@ interface WizardContextType extends WizardState {
   setLogoFile: (file: File | null) => void;
   setLogoPreview: (preview: string | null) => void;
   setProvince: (province: string) => void;
-  setNaicsCode: (code: string) => void;
+  setNaicsCodes: (codes: string[]) => void;
   setBusinessDescription: (description: string) => void;
   setCompanyName: (name: string) => void;
   setUserEmail: (email: string) => void;
@@ -53,7 +53,7 @@ const initialState: WizardState = {
   logoFile: null,
   logoPreview: null,
   province: "Ontario",
-  naicsCode: "",
+  naicsCodes: [],
   businessDescription: "",
   companyName: "",
   userEmail: "",
@@ -107,8 +107,8 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({
     setState((prev) => ({ ...prev, province }));
   };
 
-  const setNaicsCode = (code: string) => {
-    setState((prev) => ({ ...prev, naicsCode: code }));
+  const setNaicsCodes = (codes: string[]) => {
+    setState((prev) => ({ ...prev, naicsCodes: codes }));
   };
 
   const setBusinessDescription = (description: string) => {
@@ -182,7 +182,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({
         setLogoFile,
         setLogoPreview,
         setProvince,
-        setNaicsCode,
+        setNaicsCodes,
         setBusinessDescription,
         setCompanyName,
         setUserEmail,
