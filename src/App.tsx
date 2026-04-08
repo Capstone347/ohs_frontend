@@ -28,6 +28,20 @@ import Step3 from "./pages/wizard/Step3";
 import Step4 from "./pages/wizard/Step4";
 import Step5 from "./pages/wizard/Step5";
 
+// Admin
+import { AdminAuthProvider } from "./context/AdminAuthContext";
+import { AdminProtectedRoute } from "./components/admin/auth/AdminProtectedRoute";
+import { AdminShell } from "./components/admin/layout/AdminShell";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
+import AdminPendingReview from "./pages/admin/AdminPendingReview";
+import AdminCustomers from "./pages/admin/AdminCustomers";
+import AdminCustomerDetail from "./pages/admin/AdminCustomerDetail";
+import AdminEmailLogs from "./pages/admin/AdminEmailLogs";
+import AdminSettings from "./pages/admin/AdminSettings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -65,6 +79,25 @@ const App = () => (
               {/* Stripe redirect routes */}
               <Route path="/orders/:orderId/payment" element={<OrderPayment />} />
               <Route path="/orders/:orderId/success" element={<OrderSuccess />} />
+
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={
+                <AdminAuthProvider>
+                  <AdminProtectedRoute>
+                    <AdminShell />
+                  </AdminProtectedRoute>
+                </AdminAuthProvider>
+              }>
+                <Route index element={<AdminDashboard />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="orders/:orderId" element={<AdminOrderDetail />} />
+                <Route path="pending-review" element={<AdminPendingReview />} />
+                <Route path="customers" element={<AdminCustomers />} />
+                <Route path="customers/:customerId" element={<AdminCustomerDetail />} />
+                <Route path="email-logs" element={<AdminEmailLogs />} />
+                <Route path="settings" element={<AdminSettings />} />
+              </Route>
 
               <Route path="*" element={<NotFound />} />
             </Routes>
