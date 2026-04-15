@@ -154,6 +154,19 @@ export interface CreateStaffRequest {
   role: AdminRole;
 }
 
+// --- SJP Types ---
+
+export interface EditSjpSectionRequest {
+  task_description?: string;
+  required_ppe?: string[];
+  step_by_step_instructions?: string[];
+  identified_hazards?: string[];
+  control_measures?: string[];
+  training_requirements?: string[];
+  emergency_procedures?: string;
+  legislative_references?: string;
+}
+
 // --- Helpers ---
 
 async function handleAdminResponse<T>(response: Response): Promise<T> {
@@ -272,6 +285,28 @@ export const adminApi = {
     return handleAdminResponse(response);
   },
 
+  // SJP Content
+  async getSjpContent(orderId: number): Promise<import('./api').SjpFullContentResponse> {
+    const response = await adminAuthFetch(`${API_BASE_URL}/orders/${orderId}/sjp-content`);
+    return handleAdminResponse(response);
+  },
+
+  async editSjpSection(tocEntryId: number, data: EditSjpSectionRequest): Promise<{ message: string; toc_entry_id: number }> {
+    const response = await adminAuthFetch(`${API_BASE_URL}/sjp-content/${tocEntryId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleAdminResponse(response);
+  },
+
+  async regenerateSjpEntry(tocEntryId: number): Promise<{ message: string; toc_entry_id: number }> {
+    const response = await adminAuthFetch(`${API_BASE_URL}/sjp-content/${tocEntryId}/regenerate`, {
+      method: 'POST',
+    });
+    return handleAdminResponse(response);
+  },
+
   // Customers
   async getCustomers(params: { page?: number; page_size?: number; query?: string } = {}): Promise<PaginatedResponse<AdminCustomerListItem>> {
     const response = await adminAuthFetch(`${API_BASE_URL}/customers${buildParams(params)}`);
@@ -294,6 +329,15 @@ export const adminApi = {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ requires_approval }),
+    });
+    return handleAdminResponse(response);
+  },
+
+  async updatePlanPrice(planId: number, base_price: string): Promise<AdminPlan> {
+    const response = await adminAuthFetch(`${API_BASE_URL}/plans/${planId}/price`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base_price }),
     });
     return handleAdminResponse(response);
   },

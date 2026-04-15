@@ -23,7 +23,7 @@ const Step2 = () => {
   const [companyNameError, setCompanyNameError] = useState("");
 
   const logoOptional = isLogoOptional();
-  const isSjpOnlySelected = selectedPlan?.id === "sjp_only";
+  const isSjpOnlySelected = selectedPlan?.id === "industry_specific";
 
   const validateCompanyName = (name: string): boolean => {
     if (!name || name.trim().length === 0) {

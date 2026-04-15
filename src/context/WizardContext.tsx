@@ -78,7 +78,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({
 
   const setSelectedPlan = (plan: MockPlan | null) => {
     setState((prev) => {
-      const isSjpOnly = plan?.id === "sjp_only";
+      const isSjpOnly = plan?.id === "industry_specific";
 
       return {
         ...prev,
@@ -91,7 +91,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({
   const setHasIndustryAddOn = (hasAddOn: boolean) => {
     setState((prev) => ({
       ...prev,
-      hasIndustryAddOn: prev.selectedPlan?.id === "sjp_only" ? true : hasAddOn,
+      hasIndustryAddOn: prev.selectedPlan?.id === "industry_specific" ? true : hasAddOn,
     }));
   };
 
@@ -155,14 +155,14 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({
     setState(initialState);
   };
 
-  const isSjpOnlyPlan = () => state.selectedPlan?.id === "sjp_only";
+  const isSjpOnlyPlan = () => state.selectedPlan?.id === "industry_specific";
 
   const isLogoOptional = () => isSjpOnlyPlan();
 
   const getTotalPrice = () => {
     const basePrice = state.selectedPlan?.price || 0;
 
-    if (state.selectedPlan?.id === "sjp_only") {
+    if (state.selectedPlan?.id === "industry_specific") {
       return basePrice;
     }
 

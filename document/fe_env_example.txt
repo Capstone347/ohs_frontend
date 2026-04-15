@@ -1,0 +1,60 @@
+# Frontend environment template
+
+STATUS: **No .env.example exists in this repository.**
+
+The OHS Remote frontend does not currently use any environment variables.
+Verification:
+
+    $ find . -maxdepth 2 -name ".env*" 2>/dev/null
+    (no results)
+
+    $ grep -r "import.meta.env" src/ 2>/dev/null
+    (no results)
+
+No file named `.env`, `.env.example`, `.env.local`, `.env.development`, or
+`.env.production` exists at the repo root or anywhere inside `src/`. The
+Vite `import.meta.env.VITE_*` API is not referenced anywhere in the source.
+
+## What the frontend needs instead
+
+Every value that a typical frontend would read from an env var is either
+hardcoded or fetched at runtime from the backend:
+
+| Value                     | Where it comes from                                          |
+|---------------------------|--------------------------------------------------------------|
+| Backend base URL (user)   | Hardcoded at `src/services/api.ts:1`                         |
+|                           | `const API_BASE_URL = "http://localhost:8000/api/v1"`        |
+| Backend base URL (admin)  | Hardcoded at `src/services/adminApi.ts:3`                    |
+|                           | `const API_BASE_URL = "http://localhost:8000/api/v1/admin"`  |
+| Session cookie (user)     | Set by backend after OTP verification; sent automatically    |
+|                           | via `credentials: 'include'` in `authFetch`                  |
+| Session cookie (admin)    | Set by backend after password login; same mechanism          |
+| Stripe publishable key    | Fetched at runtime via `GET /payments/stripe/config`         |
+|                           | (method: `api.getStripeConfig()`)                            |
+| Admin test credentials    | Seeded by the backend — see the backend repo's README        |
+| OTP codes for test logins | Printed in the backend's stdout during development           |
+
+There is no Stripe client-side library installed (`@stripe/stripe-js` is
+absent from `package.json`), so the usual `VITE_STRIPE_PUBLISHABLE_KEY`
+pattern does not apply — the key is fetched from the backend at runtime
+and handed to a hosted Stripe Checkout URL.
+
+## Planned env-var migration (TODO, not implemented)
+
+The project has a documented future migration to move the two hardcoded
+base URLs into a `VITE_API_URL` environment variable. When that happens,
+a `.env.example` file will look approximately like this:
+
+    # Backend REST API base URL (user surface).
+    # Admin surface appends /admin at the service layer.
+    # Default: http://localhost:8000/api/v1
+    VITE_API_URL=http://localhost:8000/api/v1
+
+Until that migration lands, **developers do not need to create any env
+file to run the frontend**. Cloning the repo and running `npm install`
+followed by `npm run dev` is sufficient, provided the backend is running
+on `http://localhost:8000`.
+
+For the full planned convention (naming, `.env.local` usage, how to
+consume the variable with a fallback), see
+`docs/DEVELOPMENT_GUIDE.md` §"Add an env var" in the repo.

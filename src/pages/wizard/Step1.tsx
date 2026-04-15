@@ -90,7 +90,7 @@ const Step1 = () => {
   const handlePlanSelect = (plan: (typeof plans)[number]) => {
     setSelectedPlan(plan);
 
-    if (plan.id === "sjp_only") {
+    if (plan.id === "industry_specific") {
       setHasIndustryAddOn(true);
     }
   };
@@ -159,12 +159,12 @@ const Step1 = () => {
           );
 
           const fallbackSuitable =
-            ap.slug === "sjp_only"
+            ap.slug === "industry_specific"
               ? "Businesses needing industry-specific safe job procedures only"
               : ap.description;
 
           return {
-            id: ap.slug as "basic" | "comprehensive" | "sjp_only",
+            id: ap.slug as "basic" | "comprehensive" | "industry_specific",
             name: ap.name,
             price: parseFloat(ap.base_price) || 0,
             suitable: mockMatch?.suitable ?? fallbackSuitable,
@@ -184,11 +184,11 @@ const Step1 = () => {
         ]
       : plans;
 
-  const displayPlans = ["basic", "comprehensive", "sjp_only"]
+  const displayPlans = ["basic", "comprehensive", "industry_specific"]
     .map((id) => mergedPlans.find((p) => p.id === id))
     .filter(Boolean) as typeof plans;
 
-  const isSjpOnlySelected = selectedPlan?.id === "sjp_only";
+  const isSjpOnlySelected = selectedPlan?.id === "industry_specific";
 
   return (
     <div className="space-y-8">
@@ -436,7 +436,7 @@ const Step1 = () => {
               <p className="text-text-muted text-sm">Your Selection</p>
               <p className="text-text-light font-medium">
                 {selectedPlan.name}
-                {selectedPlan.id === "sjp_only"
+                {selectedPlan.id === "industry_specific"
                   ? " (Industry-Specific SJPs Included)"
                   : hasIndustryAddOn
                     ? " + Industry-Specific Add-On"

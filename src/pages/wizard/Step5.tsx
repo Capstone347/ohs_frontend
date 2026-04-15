@@ -16,7 +16,7 @@ const Step5 = () => {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const totalPrice = getTotalPrice();
-  const isSjpOnlySelected = selectedPlan?.id === "sjp_only";
+  const isSjpOnlySelected = selectedPlan?.id === "industry_specific";
 
   const handlePay = async () => {
     if (!orderId) {

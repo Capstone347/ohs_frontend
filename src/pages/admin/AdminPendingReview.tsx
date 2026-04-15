@@ -82,7 +82,14 @@ const AdminPendingReview = () => {
                           <p className="text-text-muted text-xs">{order.user_email}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="text-text-light">{order.plan_name}</TableCell>
+                      <TableCell className="text-text-light">
+                        {order.plan_name}
+                        {order.is_industry_specific && (
+                          <span className="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                            SJP
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell><AdminStatusBadge status={order.payment_status} type="payment" /></TableCell>
                       <TableCell className="text-text-light text-right font-medium">{formatAmount(order.total_amount, order.currency)}</TableCell>
                       <TableCell className="text-text-muted text-sm">{formatDate(order.created_at)}</TableCell>
@@ -109,7 +116,14 @@ const AdminPendingReview = () => {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="text-text-light font-medium">#{order.order_id} &middot; {order.company_name}</p>
-                      <p className="text-text-muted text-xs">{order.user_full_name} &middot; {order.plan_name}</p>
+                      <p className="text-text-muted text-xs">
+                        {order.user_full_name} &middot; {order.plan_name}
+                        {order.is_industry_specific && (
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
+                            SJP
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <p className="text-text-light font-medium">{formatAmount(order.total_amount, order.currency)}</p>
                   </div>
