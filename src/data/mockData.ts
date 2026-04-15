@@ -1,5 +1,5 @@
 export interface Plan {
-  id: "basic" | "comprehensive" | "sjp_only";
+  id: "basic" | "comprehensive" | "industry_specific";
   name: string;
   price: number;
   suitable: string;
@@ -42,7 +42,7 @@ export const plans: Plan[] = [
     ],
   },
   {
-    id: "sjp_only",
+    id: "industry_specific",
     name: "SJP Only",
     price: 149,
     suitable: "Businesses needing industry-specific safe job procedures only",
@@ -124,7 +124,7 @@ export const getTOCForPlan = (
     "Training Matrix",
   ];
 
-  if (planId === "sjp_only") {
+  if (planId === "industry_specific") {
     return sjpOnlyTOC;
   }
 

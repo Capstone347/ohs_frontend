@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Loader2,
@@ -9,6 +9,7 @@ import {
   FileText,
   Users,
   Settings,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,11 +34,12 @@ import { useAdminTemplates } from '@/hooks/admin/useAdminTemplates';
 import { useAdminStaff } from '@/hooks/admin/useAdminStaff';
 import {
   useToggleApprovalSetting,
+  useUpdatePlanPrice,
   useUploadTemplate,
   useCreateStaff,
   useDeactivateStaff,
 } from '@/hooks/admin/useAdminMutations';
-import { adminApi, AdminRole } from '@/services/adminApi';
+import { adminApi, AdminPlan, AdminRole } from '@/services/adminApi';
 import { toast } from 'sonner';
 
 function formatDate(dateStr: string | null) {
@@ -88,6 +90,7 @@ const AdminSettings = () => {
 function PlanApprovalTab() {
   const { data: plans, isLoading } = useAdminPlans();
   const toggleApproval = useToggleApprovalSetting();
+  const [editingPlan, setEditingPlan] = useState<AdminPlan | null>(null);
 
   if (isLoading) {
     return <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 bg-bg-surface rounded-2xl" />)}</div>;
@@ -105,6 +108,14 @@ function PlanApprovalTab() {
             <p className="text-text-muted text-sm">{plan.description} &middot; ${parseFloat(plan.base_price).toFixed(2)} CAD</p>
           </div>
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingPlan(plan)}
+              className="border-border-dark text-text-light hover:bg-bg-surface-light"
+            >
+              <Pencil className="w-4 h-4 mr-1" /> Edit price
+            </Button>
             <span className="text-sm text-text-muted">{plan.requires_approval ? 'Approval required' : 'Auto-deliver'}</span>
             <Switch
               checked={plan.requires_approval}
@@ -113,7 +124,94 @@ function PlanApprovalTab() {
           </div>
         </div>
       ))}
+
+      <EditPlanPriceDialog
+        plan={editingPlan}
+        onOpenChange={(open) => { if (!open) setEditingPlan(null); }}
+      />
     </div>
+  );
+}
+
+// --- Edit Plan Price Dialog ---
+function EditPlanPriceDialog({ plan, onOpenChange }: { plan: AdminPlan | null; onOpenChange: (open: boolean) => void }) {
+  const updatePrice = useUpdatePlanPrice();
+  const [priceInput, setPriceInput] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (plan) {
+      setPriceInput(parseFloat(plan.base_price).toFixed(2));
+      setError('');
+    }
+  }, [plan]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!plan) return;
+
+    const trimmed = priceInput.trim();
+    if (!trimmed) {
+      setError('Price is required.');
+      return;
+    }
+    if (!/^\d{1,8}(\.\d{1,2})?$/.test(trimmed)) {
+      setError('Enter a non-negative amount with up to 2 decimal places.');
+      return;
+    }
+
+    updatePrice.mutate(
+      { planId: plan.id, base_price: trimmed },
+      { onSuccess: () => onOpenChange(false) },
+    );
+  };
+
+  return (
+    <Dialog open={plan !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-bg-surface border-border-dark sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-text-light">
+            {plan ? `Edit ${plan.name} price` : 'Edit plan price'}
+          </DialogTitle>
+          <DialogDescription className="text-text-muted">
+            Updates the price charged at checkout immediately for new orders.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {plan && (
+            <p className="text-sm text-text-muted">
+              Current price: ${parseFloat(plan.base_price).toFixed(2)} CAD
+            </p>
+          )}
+          <div>
+            <Label className="text-text-light text-sm">New price (CAD)</Label>
+            <div className="relative mt-1.5">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">$</span>
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={priceInput}
+                onChange={(e) => setPriceInput(e.target.value)}
+                placeholder="149.99"
+                className="pl-7 bg-bg-surface-light border-border-dark text-text-light placeholder:text-text-muted"
+                required
+              />
+            </div>
+          </div>
+          {error && <p className="text-destructive text-sm">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-border-dark text-text-light hover:bg-bg-surface-light">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={updatePrice.isPending}>
+              {updatePrice.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save price
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

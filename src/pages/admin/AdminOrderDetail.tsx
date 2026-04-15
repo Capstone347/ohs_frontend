@@ -28,6 +28,8 @@ import {
   useResendEmail,
   useRegenerateDocument,
 } from '@/hooks/admin/useAdminMutations';
+import { SjpReviewPanel } from '@/components/admin/sjp/SjpReviewPanel';
+import { useAdminSjpContent } from '@/hooks/admin/useAdminSjpContent';
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '-';
@@ -51,6 +53,8 @@ const AdminOrderDetail = () => {
   const updateNotes = useUpdateOrderNotes();
   const resendEmail = useResendEmail();
   const regenerateDoc = useRegenerateDocument();
+
+  const { data: sjpContent } = useAdminSjpContent(numericId);
 
   const [approveNotes, setApproveNotes] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
@@ -90,6 +94,11 @@ const AdminOrderDetail = () => {
 
   const isPaid = order.payment_status === 'paid';
   const isReviewPending = order.order_status === 'review_pending';
+
+  const sjpAllCompleted = sjpContent
+    ? sjpContent.entries.every((e) => e.status === 'completed')
+    : false;
+  const sjpApproveBlocked = order.is_industry_specific && !sjpAllCompleted;
 
   return (
     <div className="space-y-6">
@@ -138,6 +147,11 @@ const AdminOrderDetail = () => {
               )}
             </div>
           </motion.div>
+
+          {/* SJP Content Review */}
+          {order.is_industry_specific && (
+            <SjpReviewPanel orderId={order.order_id} isEditable={isReviewPending} />
+          )}
 
           {/* Documents */}
           {order.documents.length > 0 && (
@@ -207,9 +221,14 @@ const AdminOrderDetail = () => {
                 placeholder="Optional approval notes..."
                 className="w-full rounded-lg border border-border-dark bg-bg-surface-light px-3 py-2.5 text-sm text-text-light placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 mb-3 min-h-[80px] resize-none"
               />
+              {sjpApproveBlocked && (
+                <p className="text-xs text-warning mb-2">
+                  All SJP entries must be completed before approval.
+                </p>
+              )}
               <ConfirmDialog
                 trigger={
-                  <Button className="w-full" size="lg" disabled={approveOrder.isPending}>
+                  <Button className="w-full" size="lg" disabled={approveOrder.isPending || sjpApproveBlocked}>
                     {approveOrder.isPending ? (
                       <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Approving...</>
                     ) : (
@@ -218,7 +237,11 @@ const AdminOrderDetail = () => {
                   </Button>
                 }
                 title="Approve Order"
-                description="This will generate the document and send the delivery email to the customer. This action cannot be undone."
+                description={
+                  order.is_industry_specific
+                    ? "This will assemble the SJP document and send the delivery email to the customer. This action cannot be undone."
+                    : "This will generate the document and send the delivery email to the customer. This action cannot be undone."
+                }
                 confirmLabel="Approve"
                 isLoading={approveOrder.isPending}
                 onConfirm={() => approveOrder.mutate({ orderId: order.order_id, admin_notes: approveNotes || undefined })}

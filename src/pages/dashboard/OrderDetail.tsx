@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   MailIcon,
+  ClipboardCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ import { OrderStatusBadge } from "@/components/dashboard/OrderStatusBadge";
 import { StatusTimeline } from "@/components/dashboard/StatusTimeline";
 import { OrderDetailSkeleton } from "@/components/dashboard/OrderDetailSkeleton";
 import { OrderNotFound } from "@/components/dashboard/OrderNotFound";
+import { SjpGenerationProgress } from "@/components/dashboard/SjpGenerationProgress";
 import { useOrderDetail } from "@/hooks/useOrderDetail";
 import { downloadDocument } from "@/lib/downloadDocument";
 import { orderStatusHelperText, OrderStatus } from "@/lib/statusMaps";
@@ -103,10 +105,15 @@ const OrderDetailPage = () => {
       return;
     }
     try {
+      const docIndex = order.documents.indexOf(doc);
+      const hasMultipleDocs = order.documents.length > 1 && order.is_industry_specific;
+      const filename = hasMultipleDocs && docIndex > 0
+        ? `sjp_${order.order_id}.${doc.file_format}`
+        : `ohs_manual_${order.order_id}.${doc.file_format}`;
       await downloadDocument(
         doc.document_id,
         doc.access_token,
-        `ohs_manual_${order.order_id}.${doc.file_format}`,
+        filename,
       );
     } catch {
       // Error already toasted in downloadDocument
@@ -262,6 +269,34 @@ const OrderDetailPage = () => {
             </div>
           </motion.div>
 
+          {/* SJP Generation Progress */}
+          {order.is_industry_specific && order.order_status === 'processing' && (
+            <SjpGenerationProgress orderId={order.order_id} />
+          )}
+
+          {/* SJP Under Review */}
+          {order.is_industry_specific && order.order_status === 'review_pending' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="bg-white rounded-2xl border border-wizard-border shadow-lg shadow-black/5 p-8"
+            >
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3">
+                <ClipboardCheck className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-wizard-text">
+                    Under Review
+                  </p>
+                  <p className="text-sm text-wizard-text-muted mt-1">
+                    Your safe job procedures have been generated and are being reviewed by our team.
+                    You'll receive an email with download links once approved.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -278,8 +313,14 @@ const OrderDetailPage = () => {
               </p>
             ) : (
               <div className="space-y-3">
-                {order.documents.map((doc) => {
+                {order.documents.map((doc, index) => {
                   const isExpired = new Date(doc.token_expires_at) < new Date();
+                  const hasMultipleDocs = order.documents.length > 1 && order.is_industry_specific;
+                  const docLabel = hasMultipleDocs
+                    ? index === 0
+                      ? "OHS Manual"
+                      : "Safe Job Procedures (SJP)"
+                    : "OHS Manual";
                   return (
                     <div
                       key={doc.document_id}
@@ -289,7 +330,7 @@ const OrderDetailPage = () => {
                         <FileText className="w-5 h-5 text-primary" />
                         <div>
                           <p className="text-wizard-text text-sm font-medium">
-                            OHS Manual — {doc.file_format.toUpperCase()}
+                            {docLabel} — {doc.file_format.toUpperCase()}
                           </p>
                           <p className="text-wizard-text-muted text-xs">
                             Generated {formatDate(doc.generated_at)}

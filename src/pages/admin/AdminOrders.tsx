@@ -202,7 +202,14 @@ const AdminOrders = () => {
                           <p className="text-text-muted text-xs">{order.user_email}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="text-text-light">{order.plan_name}</TableCell>
+                      <TableCell className="text-text-light">
+                        {order.plan_name}
+                        {order.is_industry_specific && (
+                          <span className="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                            SJP
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell><AdminStatusBadge status={order.order_status} type="order" /></TableCell>
                       <TableCell><AdminStatusBadge status={order.payment_status} type="payment" /></TableCell>
                       <TableCell className="text-text-light text-right font-medium">{formatAmount(order.total_amount, order.currency)}</TableCell>
@@ -234,6 +241,11 @@ const AdminOrders = () => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <AdminStatusBadge status={order.order_status} type="order" />
                     <AdminStatusBadge status={order.payment_status} type="payment" />
+                    {order.is_industry_specific && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
+                        SJP
+                      </span>
+                    )}
                     <span className="text-text-muted text-xs ml-auto">{formatDate(order.created_at)}</span>
                   </div>
                 </motion.div>

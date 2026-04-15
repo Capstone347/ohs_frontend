@@ -1,0 +1,150 @@
+# Repo root — ls -la
+
+total 1232
+drwxr-xr-x@  28 gustavocamargo  staff     896 Apr 14 22:28 .
+drwxr-xr-x@   6 gustavocamargo  staff     192 Mar  7 12:06 ..
+drwxr-xr-x@   3 gustavocamargo  staff      96 Apr 14 21:52 .claude
+drwxr-xr-x@  16 gustavocamargo  staff     512 Apr 14 21:10 .git
+-rw-r--r--@   1 gustavocamargo  staff     263 Mar 31 16:53 .gitignore
+-rw-r--r--@   1 gustavocamargo  staff    7858 Apr 14 22:24 CHANGELOG.md
+-rw-r--r--@   1 gustavocamargo  staff    7467 Apr 14 22:26 CLAUDE.md
+-rw-r--r--@   1 gustavocamargo  staff    6181 Apr 14 22:17 GETTING_STARTED.md
+-rw-r--r--@   1 gustavocamargo  staff    6635 Apr 14 22:25 README.md
+-rw-r--r--@   1 gustavocamargo  staff  245395 Mar  7 12:06 bun.lockb
+-rw-r--r--@   1 gustavocamargo  staff     414 Mar  7 12:06 components.json
+drwxr-xr-x@   7 gustavocamargo  staff     224 Apr  8 02:07 dist
+drwxr-xr-x@  12 gustavocamargo  staff     384 Apr 14 22:23 docs
+drwxr-xr-x@   5 gustavocamargo  staff     160 Apr 14 22:38 document
+-rw-r--r--@   1 gustavocamargo  staff     765 Mar  7 12:06 eslint.config.js
+-rw-r--r--@   1 gustavocamargo  staff    1450 Mar  7 12:06 index.html
+drwxr-xr-x@ 358 gustavocamargo  staff   11456 Mar  7 12:19 node_modules
+-rw-r--r--@   1 gustavocamargo  staff  295195 Mar 16 23:42 package-lock.json
+-rw-r--r--@   1 gustavocamargo  staff    3016 Mar  7 12:06 package.json
+-rw-r--r--@   1 gustavocamargo  staff      81 Mar  7 12:06 postcss.config.js
+drwxr-xr-x@   5 gustavocamargo  staff     160 Mar  7 12:06 public
+drwxr-xr-x@  15 gustavocamargo  staff     480 Apr  7 23:37 src
+-rw-r--r--@   1 gustavocamargo  staff    4674 Mar  7 12:06 tailwind.config.ts
+-rw-r--r--@   1 gustavocamargo  staff     685 Mar  7 12:06 tsconfig.app.json
+-rw-r--r--@   1 gustavocamargo  staff     369 Mar  7 12:06 tsconfig.json
+-rw-r--r--@   1 gustavocamargo  staff     481 Mar  7 12:06 tsconfig.node.json
+-rw-r--r--@   1 gustavocamargo  staff     499 Mar 31 16:58 vite.config.ts
+-rw-r--r--@   1 gustavocamargo  staff     395 Mar  7 12:06 vitest.config.ts
+
+# src/ — ls -la
+
+total 56
+drwxr-xr-x@ 15 gustavocamargo  staff   480 Apr  7 23:37 .
+drwxr-xr-x@ 28 gustavocamargo  staff   896 Apr 14 22:28 ..
+-rw-r--r--@  1 gustavocamargo  staff   606 Mar  7 12:06 App.css
+-rw-r--r--@  1 gustavocamargo  staff  4769 Apr  7 23:37 App.tsx
+drwxr-xr-x@ 10 gustavocamargo  staff   320 Apr  7 23:37 components
+drwxr-xr-x@  5 gustavocamargo  staff   160 Apr  8 01:17 context
+drwxr-xr-x@  3 gustavocamargo  staff    96 Apr  8 01:15 data
+drwxr-xr-x@  8 gustavocamargo  staff   256 Apr  8 00:25 hooks
+-rw-r--r--@  1 gustavocamargo  staff  4420 Mar  7 12:06 index.css
+drwxr-xr-x@  8 gustavocamargo  staff   256 Apr  7 23:37 lib
+-rw-r--r--@  1 gustavocamargo  staff   161 Mar  7 12:06 main.tsx
+drwxr-xr-x@ 11 gustavocamargo  staff   352 Apr  8 02:07 pages
+drwxr-xr-x@  4 gustavocamargo  staff   128 Apr 14 21:14 services
+drwxr-xr-x@  4 gustavocamargo  staff   128 Mar  7 12:06 test
+-rw-r--r--@  1 gustavocamargo  staff    38 Mar  7 12:06 vite-env.d.ts
+
+# src/components — ls
+
+NavLink.tsx
+PaymentMethodBadges.tsx
+admin
+auth
+dashboard
+landing
+layout
+ui
+
+# src/pages — ls
+
+Index.tsx
+Login.tsx
+NotFound.tsx
+OrderPayment.tsx
+OrderSuccess.tsx
+Success.tsx
+admin
+dashboard
+wizard
+
+# src/pages/wizard — ls
+
+Step1.tsx
+Step2.tsx
+Step3.tsx
+Step4.tsx
+Step5.tsx
+
+# src/pages/admin — ls
+
+AdminCustomerDetail.tsx
+AdminCustomers.tsx
+AdminDashboard.tsx
+AdminEmailLogs.tsx
+AdminLogin.tsx
+AdminOrderDetail.tsx
+AdminOrders.tsx
+AdminPendingReview.tsx
+AdminSettings.tsx
+
+# src/pages/dashboard — ls
+
+DashboardOrders.tsx
+OrderDetail.tsx
+
+# src/services — ls
+
+adminApi.ts
+api.ts
+
+# src/context — ls
+
+AdminAuthContext.tsx
+AuthContext.tsx
+WizardContext.tsx
+
+# src/hooks — ls
+
+admin
+use-mobile.tsx
+use-toast.ts
+useOrderDetail.ts
+useOrders.ts
+useSjpStatus.ts
+
+# src/lib — ls
+
+adminStatusMaps.ts
+downloadDocument.ts
+ipUtils.ts
+provinceMapping.ts
+statusMaps.ts
+utils.ts
+
+# src/data — ls
+
+mockData.ts
+
+# docs/ — ls
+
+ADMIN_API.md
+API_DOCUMENTATION.md
+API_INTEGRATION.md
+API_USER_DASHBOARD_DOCS.md
+ARCHITECTURE.md
+DEVELOPMENT_GUIDE.md
+SJP_FRONTEND_GUIDE.md
+STYLING_GUIDE.md
+TESTING_GUIDE.md
+TROUBLESHOOTING.md
+
+# public/ — ls
+
+favicon.ico
+placeholder.svg
+robots.txt

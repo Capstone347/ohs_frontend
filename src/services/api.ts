@@ -61,6 +61,7 @@ interface OrderSummary {
     description: string;
     price: number;
   };
+  is_industry_specific: boolean;
   documents: OrderDocument[];
   created_at: string;
   updated_at: string;
@@ -173,6 +174,84 @@ interface OrdersQueryParams {
   order_status?: string;
   page?: number;
   page_size?: number;
+}
+
+// --- SJP (Safe Job Procedures) interfaces ---
+
+type SjpTocEntryStatus = 'pending' | 'generating' | 'completed' | 'failed';
+type SjpGenerationStatus = 'pending' | 'generating_toc' | 'generating_sjps' | 'completed' | 'failed';
+
+interface SjpStatusTocEntry {
+  toc_entry_id: number;
+  title: string;
+  status: SjpTocEntryStatus;
+  is_completed: boolean;
+  generated_at: string | null;
+  error_message: string | null;
+}
+
+interface SjpGenerationStatusResponse {
+  job_id: number;
+  order_id: number;
+  status: SjpGenerationStatus;
+  created_at: string;
+  updated_at: string;
+  toc_generated_at: string | null;
+  completed_at: string | null;
+  failed_at: string | null;
+  error_message: string | null;
+  progress: {
+    completed_sjps: number;
+    total_sjps: number;
+    progress_ratio: number;
+  };
+  toc_entries: SjpStatusTocEntry[];
+}
+
+interface SjpContentSections {
+  task_description: string;
+  required_ppe: string[];
+  step_by_step_instructions: string[];
+  identified_hazards: string[];
+  control_measures: string[];
+  training_requirements: string[];
+  emergency_procedures: string;
+  legislative_references: string | null;
+}
+
+interface SjpContentEntry {
+  toc_entry_id: number;
+  title: string;
+  position: number;
+  status: SjpTocEntryStatus;
+  sections: SjpContentSections | null;
+  generated_at: string | null;
+  error_message: string | null;
+}
+
+interface SjpFullContentResponse {
+  job_id: number;
+  order_id: number;
+  province: string;
+  naics_codes: string[];
+  status: string;
+  disclaimer: string;
+  entries: SjpContentEntry[];
+}
+
+interface SjpGenerateResponse {
+  job_id: number;
+  status: string;
+  created_at: string;
+}
+
+interface OrderStatusResponse {
+  order_id: number;
+  order_status: string;
+  payment_status: string;
+  plan_name: string;
+  is_industry_specific: boolean;
+  created_at: string;
 }
 
 // --- Error handling ---
@@ -370,6 +449,11 @@ export const api = {
     return handleResponse<OrderSummary>(response);
   },
 
+  async getOrderStatus(orderId: number): Promise<OrderStatusResponse> {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`);
+    return handleResponse<OrderStatusResponse>(response);
+  },
+
   async acceptLegalTerms(
     orderId: number,
     data: LegalAcknowledgmentRequest,
@@ -402,6 +486,32 @@ export const api = {
     return handleResponse<StripeConfigResponse>(response);
   },
 
+  // --- SJP methods ---
+
+  async startSjpGeneration(orderId: number): Promise<SjpGenerateResponse> {
+    const response = await authFetch(`${API_BASE_URL}/sjp/${orderId}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    return handleResponse<SjpGenerateResponse>(response);
+  },
+
+  async getSjpStatus(orderId: number): Promise<SjpGenerationStatusResponse> {
+    const response = await authFetch(`${API_BASE_URL}/sjp/${orderId}/status`);
+    return handleResponse<SjpGenerationStatusResponse>(response);
+  },
+
+  async getSjpContent(orderId: number): Promise<SjpFullContentResponse> {
+    const response = await authFetch(`${API_BASE_URL}/sjp/${orderId}/content`);
+    return handleResponse<SjpFullContentResponse>(response);
+  },
+
+  async getSjpEntry(orderId: number, tocEntryId: number): Promise<SjpContentEntry> {
+    const response = await authFetch(`${API_BASE_URL}/sjp/${orderId}/content/${tocEntryId}`);
+    return handleResponse<SjpContentEntry>(response);
+  },
+
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     const response = await fetch(`${API_BASE_URL}/health`);
     return handleResponse(response);
@@ -429,6 +539,15 @@ export type {
   OrderDetail,
   OrderDetailCompany,
   OrdersQueryParams,
+  SjpTocEntryStatus,
+  SjpGenerationStatus,
+  SjpStatusTocEntry,
+  SjpGenerationStatusResponse,
+  SjpContentSections,
+  SjpContentEntry,
+  SjpFullContentResponse,
+  SjpGenerateResponse,
+  OrderStatusResponse,
 };
 
 export { ApiError };
